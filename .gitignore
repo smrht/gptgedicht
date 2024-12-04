@@ -8,3 +8,6 @@ __pycache__/
 .AppleDouble  
 .LSOverride
 *.log
+*.sqlite3
+.env.env
+.env
