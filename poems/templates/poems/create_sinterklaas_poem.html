@@ -1,0 +1,164 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinterklaas Gedicht Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .poem-result {
+            white-space: pre-line;
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            background-color: #f8f9fa;
+        }
+        .error-message {
+            display: none;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 0.25rem;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .retry-button {
+            display: none;
+            margin: 10px 0;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .form-group {
+                margin-bottom: 1rem;
+            }
+        }
+        /* Verbeterde toegankelijkheid */
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+        .btn-primary {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .btn-primary:hover {
+            background-color: #004494;
+            border-color: #004494;
+        }
+        .help-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mt-4 mb-4">Sinterklaas Gedicht Generator</h1>
+        
+        <div class="alert alert-info mb-4">
+            <h5 class="alert-heading">Tips voor het beste resultaat:</h5>
+            <ul class="mb-0">
+                <li>Begin je gedicht met de regel: "Sinterklaas zat eens te denken, wat hij jou zou schenken."</li>
+                <li>Voeg persoonlijke details toe voor een uniek gedicht</li>
+                <li>Speel met humor en creativiteit</li>
+            </ul>
+        </div>
+
+        {% crispy form %}
+        
+        <div class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Laden...</span>
+            </div>
+            <p class="mt-2">Je Sinterklaasgedicht wordt gegenereerd... Dit kan enkele momenten duren.</p>
+        </div>
+        
+        <div class="error-message"></div>
+        <button class="btn btn-primary retry-button">Probeer opnieuw</button>
+        
+        <div id="poemResult" class="poem-result" style="display: none;"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const loading = document.querySelector('.loading');
+            const poemResult = document.querySelector('#poemResult');
+            const errorMessage = document.querySelector('.error-message');
+            const retryButton = document.querySelector('.retry-button');
+            let isSubmitting = false;
+
+            retryButton.addEventListener('click', function() {
+                errorMessage.style.display = 'none';
+                retryButton.style.display = 'none';
+                handleSubmit();
+            });
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!isSubmitting) {
+                    handleSubmit();
+                }
+            });
+
+            async function handleSubmit() {
+                if (isSubmitting) return;
+                
+                isSubmitting = true;
+                loading.style.display = 'block';
+                errorMessage.style.display = 'none';
+                retryButton.style.display = 'none';
+                poemResult.style.display = 'none';
+                
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        poemResult.textContent = data.poem;
+                        poemResult.style.display = 'block';
+                        errorMessage.style.display = 'none';
+                        retryButton.style.display = 'none';
+                    } else {
+                        errorMessage.textContent = data.message || 'Er is een fout opgetreden bij het genereren van het Sinterklaasgedicht.';
+                        errorMessage.style.display = 'block';
+                        
+                        if (response.status === 429) {
+                            // Rate limit error
+                            setTimeout(() => {
+                                retryButton.style.display = 'block';
+                            }, 60000); // Toon retry knop na 1 minuut
+                        } else {
+                            retryButton.style.display = 'block';
+                        }
+                    }
+                } catch (error) {
+                    errorMessage.textContent = 'Er is een fout opgetreden bij het genereren van het Sinterklaasgedicht. Probeer het later opnieuw.';
+                    errorMessage.style.display = 'block';
+                    retryButton.style.display = 'block';
+                } finally {
+                    loading.style.display = 'none';
+                    isSubmitting = false;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
