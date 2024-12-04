@@ -14,29 +14,27 @@ from pathlib import Path
 import environ
 import os
 
-env = environ.Env(  
-    # set casting, default value  
-    DEBUG=(bool, False)  
-)  
-
+# Initialize environ
+env = environ.Env(
+    DEBUG=(bool, False),
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))  
 
+# Read .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY", default="change_me")  
-
+SECRET_KEY = env('SECRET_KEY', default='your-default-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG", default=False)  
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
-
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 
 # Application definition
 
@@ -55,7 +53,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [  
     "django.middleware.security.SecurityMiddleware",  
     "whitenoise.middleware.WhiteNoiseMiddleware",   # <-- here
-    "debug_toolbar.middleware.DebugToolbarMiddleware",  
     "django.contrib.sessions.middleware.SessionMiddleware",  
     "django.middleware.common.CommonMiddleware",  
     "django.middleware.csrf.CsrfViewMiddleware",  
@@ -84,14 +81,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "poemgenerator.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    "default": env.db(default="sqlite:///db.sqlite3"),
+    'default': env.db(default='sqlite:///db.sqlite3')
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -111,7 +106,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -123,15 +117,14 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = env.str("STATIC_URL", default="/static/")  
-STATIC_ROOT = env.str("STATIC_ROOT", default=BASE_DIR / "staticfiles")
+STATIC_URL = env.str('STATIC_URL', default='/static/')
+STATIC_ROOT = env.str('STATIC_ROOT', default=str(BASE_DIR / 'staticfiles'))
 
-MEDIA_ROOT = env("MEDIA_ROOT", default=BASE_DIR / "media")  
-MEDIA_URL = env("MEDIA_PATH", default="/media/")
+MEDIA_ROOT = env.str('MEDIA_ROOT', default=str(BASE_DIR / 'media'))
+MEDIA_URL = env.str('MEDIA_URL', default='/media/')
 
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = DEBUG
@@ -149,13 +142,8 @@ RATELIMIT_USE_CACHE = 'default'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Load environment variables
-from dotenv import load_dotenv
-import os
-load_dotenv()
-
 # OpenAI settings
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_API_KEY = env('OPENAI_API_KEY')
 
 LOGGING = {  
     "version": 1,  

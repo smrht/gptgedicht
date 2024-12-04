@@ -59,7 +59,7 @@ class Poem(models.Model):
     # Generated content and metadata
     generated_text = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
-    ip_address = models.GenericIPAddressField(help_text="IP adres van de gebruiker")
+    ip_address = models.GenericIPAddressField(help_text="IP adres van de gebruiker", default='127.0.0.1')
 
     class Meta:
         ordering = ['-created_at']
