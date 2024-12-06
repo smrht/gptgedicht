@@ -63,7 +63,7 @@ class PoemCreateView(CreateView):
     def post(self, request, *args, **kwargs):
         try:
             ip_address = get_client_ip(request)
-            # Check rate limit
+            # Controleer dagelijkse limiet
             if Poem.check_rate_limit(ip_address):
                 return JsonResponse({
                     'status': 'error',

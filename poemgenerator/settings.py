@@ -34,7 +34,13 @@ SECRET_KEY = env('SECRET_KEY', default='your-default-secret-key-here')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', default=False)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'https://gedichtgpt.nl').split(',')
+
+# Controleer of CSRF_TRUSTED_ORIGINS correct is ingesteld
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = ['https://gedichtgpt.nl']
 
 # Application definition
 
