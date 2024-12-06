@@ -9,12 +9,17 @@ from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from django.core.exceptions import ValidationError
+from pydantic import BaseModel
 from .models import Poem
 from .forms import PoemForm, SinterklaasPoemForm
 from .utils import contains_blocked_content, retry_with_exponential_backoff
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
+
+class PoemSchema(BaseModel):
+    title: str
+    verses: list[str]
 
 def get_client_ip(request):
     """Haal het IP-adres van de gebruiker op."""
@@ -25,33 +30,213 @@ def get_client_ip(request):
 
 def get_openai_client():
     """
-    Maak een OpenAI client aan met de nieuwe API-structuur.
-    We gaan ervan uit dat settings.OPENAI_API_KEY correct is ingesteld.
+    Maak een OpenAI client aan.
     """
     api_key = getattr(settings, 'OPENAI_API_KEY', None)
     if not api_key:
         raise ValueError("OPENAI_API_KEY niet gevonden in settings.")
-
-    # Verwijder de validatie van de API key.
-    # We gaan er vanuit dat de gebruiker een geldige key heeft.
     client = OpenAI(api_key=api_key)
     return client
 
 def test_openai_connection():
-    """Test of de OpenAI API goed werkt via de nieuwe structuur."""
+    """Test of de OpenAI API goed werkt."""
     try:
         client = get_openai_client()
-        # Simpele test prompt
         completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=[{"role": "user", "content": "Say 'API connection successful'"}],
             max_tokens=10
         )
-        # Als we hier komen is de connectie gelukt
         return True, "API connection successful"
     except Exception as e:
         logger.error(f"OpenAI test mislukt: {e}")
         return False, str(e)
+
+def beschrijf_stijl_op_basis_van_de_user_input(data):
+    style = data.get('style', 'rijmend')
+    # Voeg hier per stijl duidelijke instructies toe
+    if style == 'haiku':
+        return "Gebruik de haikuvorm: 3 regels met 5-7-5 lettergrepen, vaak geïnspireerd door de natuur."
+    elif style == 'limerick':
+        return "Gebruik de limerickvorm: 5 regels met rijmschema aabba, humoristisch van toon."
+    elif style == 'sonnet':
+        return "Gebruik een sonnetvorm: 14 regels met rijmschema abab cdcd efef gg, vaak over liefde of natuur."
+    elif style == 'acrostichon':
+        return "Maak een acrostichon: de eerste letters van elke regel vormen samen een woord (bijv. het thema)."
+    elif style == 'kinderlijk':
+        return "Maak het gedicht kinderlijk: eenvoudige woorden, speels, makkelijk te begrijpen."
+    elif style == 'grappig':
+        return "Maak het gedicht grappig: luchtige toon, humoristische elementen."
+    elif style == 'romantisch':
+        return "Maak het gedicht romantisch: focus op liefde, warme gevoelens."
+    elif style == 'nostalgisch':
+        return "Maak het gedicht nostalgisch: roep herinneringen en verlangen naar vroeger op."
+    elif style == 'inspirerend':
+        return "Maak het gedicht inspirerend: motiverend, positief, opbeurend."
+    elif style == 'meditatief':
+        return "Maak het gedicht meditatief: rustig, beschouwend, zet aan tot nadenken."
+    elif style == 'modern':
+        return "Maak het gedicht modern: vrije vorm, geen vast rijmschema, hedendaagse thema's."
+    elif style == 'eenvoudig':
+        return "Maak het gedicht eenvoudig: simpele taal, door iedereen te begrijpen."
+    elif style == 'rijmend':
+        return "Maak het gedicht rijmend: traditioneel met een duidelijk hoorbaar rijmschema."
+    elif style == 'grappig':
+        return "Maak het gedicht grappig: humoristische toon, luchtige sfeer."
+    # Als er geen specifieke stijl is, gewoon een rijmend gedicht
+    return "Gebruik een passende stijl bij het gekozen thema en stemming, met duidelijke vorm."
+
+@retry_with_exponential_backoff(max_retries=3, initial_wait=5)
+def _process_user_input(data):
+    """
+    Verwerk gebruikersinvoer tot gestructureerde instructies.
+    """
+    client = get_openai_client()
+    user_input = f"""
+    Thema: {data.get('theme', '')}
+    Stijl: {data.get('style', 'rijmend')}
+    Mood: {data.get('mood', '')}
+    Ontvanger: {data.get('recipient', '')}
+    Seizoen: {data.get('season', '')}
+    Lengte: {data.get('length', '')}
+    Uit te sluiten woorden: {data.get('excluded_words', '')}
+    """
+
+    system_prompt = """Je bent een planner die op basis van gebruikersinvoer een duidelijke instructie maakt om een perfect gedicht te schrijven.
+Specificeer minimaal:
+ - een rijmschema of vertel dat er geen vast schema is (afh. van stijl)
+ - aantal strofen of regels
+ - toon (afhankelijk van mood of stijl)
+ - thema
+ - eventueel extra instructies
+
+Output in exact JSON formaat:
+{
+ "rijmschema": "aabb",
+ "aantal_strofen": 4,
+ "toon": "speels",
+ "thema": "...",
+ "excluded_words": "...",
+ "extra_instructies": "..."
+}
+Zorg dat de output strikt valide JSON is, zonder extra tekst.
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input}
+        ],
+        temperature=0.7,
+        max_tokens=1000
+    )
+    structured_input = json.loads(response.choices[0].message.content)
+    return structured_input
+
+def _bepaal_aantal_strofen_op_basis_van_lengte(data):
+    length = data.get('length', 'medium')
+    if length == 'kort':
+        return 4
+    elif length == 'lang':
+        return 12
+    # Default medium
+    return 8
+
+def _generate_poem_prompt(structured_input, data):
+    """
+    Genereer een prompt voor het gedicht. We nemen instructies over stijl, lengte, toon, etc. mee.
+    """
+    aantal_strofen = _bepaal_aantal_strofen_op_basis_van_lengte(data)
+    style_instructies = beschrijf_stijl_op_basis_van_de_user_input(data)
+    excluded_words = structured_input.get('excluded_words', '')
+    if excluded_words.strip():
+        excluded_text = f"Gebruik onder geen beding de volgende woorden: {excluded_words}. Als een woord zou rijmen maar staat in deze lijst, kies een alternatief."
+    else:
+        excluded_text = "Geen uitgesloten woorden specifiek."
+
+    prompt = f"""
+Schrijf een Nederlands gedicht over het thema: {structured_input.get('thema', '')}.
+Toon: {structured_input.get('toon', 'neutraal')}.
+Rijmschema: {structured_input.get('rijmschema', 'aabb')}.
+Aantal strofen: {aantal_strofen}.
+Stemming: {data.get('mood', '')}.
+Ontvanger: {data.get('recipient', '')}.
+Seizoen: {data.get('season', '')}.
+{excluded_text}
+
+{style_instructies}
+
+Extra instructies: {structured_input.get('extra_instructies', '')}
+
+Geef je antwoord uitsluitend in onderstaand JSON-formaat zonder extra tekst:
+{{
+  "title": "<Titel van het gedicht>",
+  "verses": [
+    "<vers 1>",
+    "<vers 2>",
+    ...
+  ]
+}}
+
+Zorg ervoor dat het duidelijk hoorbaar rijmt indien een rijmschema is opgegeven, dat het familie-vriendelijk is, en volledig aansluit bij de gekozen stijl en mood.
+""".strip()
+    return prompt
+
+@retry_with_exponential_backoff(max_retries=3, initial_wait=5)
+def _generate_draft_poem(poem_prompt):
+    """
+    Genereer een eerste draft van het gedicht in het gespecificeerde JSON-format.
+    """
+    client = get_openai_client()
+    system_prompt = """Je bent een Nederlandse dichter die perfect kan voldoen aan bovenstaande instructies.
+Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
+"""
+
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": poem_prompt}
+        ],
+        temperature=0.7,
+        max_tokens=1500,
+        response_format=PoemSchema
+    )
+    poem_draft = completion.choices[0].message.parsed
+    return poem_draft
+
+@retry_with_exponential_backoff(max_retries=3, initial_wait=5)
+def _check_and_fix_rhyme(poem_draft, structured_input, data):
+    """
+    Controleer het rijmschema en corrigeer indien nodig. Output blijft in zelfde JSON format.
+    """
+    client = get_openai_client()
+    check_prompt = f"""
+Dit is het gedicht dat je hebt gemaakt (in JSON):
+{poem_draft.json()}
+
+Rijmschema: {structured_input.get('rijmschema', 'aabb')}
+
+Controleer of elke strofe het juiste rijmschema volgt (indien opgegeven). Als er regels niet rijmen of niet passen bij de instructies, herschrijf alleen die specifieke versregels.
+Behoud dezelfde titel, thema en stijl. Hou rekening met uitgesloten woorden: {structured_input.get('excluded_words','')}
+
+Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra tekst.
+"""
+
+    completion = client.beta.chat.completions.parse(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content":"Je bent een strenge redacteur die erop let dat elk gedicht perfect voldoet aan het schema en instructies."},
+            {"role": "user", "content": check_prompt}
+        ],
+        temperature=0.5,
+        max_tokens=1500,
+        response_format=PoemSchema
+    )
+    final_poem = completion.choices[0].message.parsed
+    return final_poem
+
 
 class PoemCreateView(CreateView):
     model = Poem
@@ -63,7 +248,7 @@ class PoemCreateView(CreateView):
     def post(self, request, *args, **kwargs):
         try:
             ip_address = get_client_ip(request)
-            # Controleer dagelijkse limiet
+            # Check rate limit
             if Poem.check_rate_limit(ip_address):
                 return JsonResponse({
                     'status': 'error',
@@ -71,7 +256,7 @@ class PoemCreateView(CreateView):
                 }, status=429)
 
             data = request.POST.dict()
-            # Check op ongepaste content
+            # Check op ongepaste content in de input
             for veld in ['theme', 'mood', 'recipient', 'excluded_words']:
                 if contains_blocked_content(data.get(veld, '')):
                     return JsonResponse({
@@ -91,7 +276,8 @@ class PoemCreateView(CreateView):
             )
 
             try:
-                poem.generated_text = self._generate_poem_with_retry(data)
+                poem_object = self._generate_poem_with_retry(data)
+                poem.generated_text = json.dumps(poem_object.dict(), ensure_ascii=False)
                 poem.full_clean()
                 poem.save()
                 return JsonResponse({
@@ -134,60 +320,24 @@ class PoemCreateView(CreateView):
     @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
     def _generate_poem_with_retry(self, data):
         """
-        Genereer een gedicht met de nieuwe OpenAI API manier.
+        Gebruik de nieuwe hulpfuncties met Structured Outputs.
         """
-        system_prompt = """Je bent een ervaren dichter die prachtige Nederlandse gedichten schrijft.
-Je schrijft alleen familie-vriendelijke, gepaste gedichten.
-Vermijd onder alle omstandigheden ongepaste, seksuele of expliciete inhoud.
-Focus op positieve, opbouwende en inspirerende thema's.
+        structured_input = _process_user_input(data)
+        poem_prompt = _generate_poem_prompt(structured_input, data)
+        poem_draft = _generate_draft_poem(poem_prompt)
 
-Volg deze regels voor specifieke stijlen:
-- Voor 'haiku': Schrijf precies 3 regels met 5-7-5 lettergrepen, vaak over natuur of seizoenen
-- Voor 'limerick': Schrijf 5 regels met rijmschema aabba, humoristisch maar gepast
-- Voor 'sonnet': Schrijf 14 regels met rijmschema abab cdcd efef gg
-- Voor 'acrostichon': Zorg dat de eerste letters van elke regel het opgegeven thema of de naam van de ontvanger vormen
-- Voor 'kinderlijk': Gebruik eenvoudige woorden en korte zinnen, maak het speels en begrijpelijk voor kinderen
-- Voor 'rijmend': Zorg voor een duidelijk rijmschema door het hele gedicht
-- Voor 'eenvoudig': Gebruik simpele taal die door iedereen begrepen kan worden
-- Voor 'modern': Schrijf in vrije vorm zonder vaste regels
-- Voor 'grappig': Maak het gedicht luchtig en humoristisch
-- Voor 'romantisch': Focus op liefde en warme gevoelens
-- Voor 'nostalgisch': Roep herinneringen en verlangen op
-- Voor 'inspirerend': Maak het gedicht motiverend en positief
-- Voor 'meditatief': Schrijf rustig en beschouwend"""
-
-        prompt = f"Schrijf een gepast, familie-vriendelijk {data.get('style', 'rijmend')} gedicht"
-        if data.get('theme'):
-            prompt += f" over {data['theme']}"
-        if data.get('recipient'):
-            prompt += f" voor {data['recipient']}"
-        if data.get('mood'):
-            prompt += f" met een {data['mood']} stemming"
-        if data.get('season'):
-            prompt += f" passend bij het seizoen {data['season']}"
-        if data.get('length'):
-            prompt += f". Het gedicht moet {data['length']} lang zijn"
-        if data.get('excluded_words'):
-            prompt += f". Vermijd de volgende woorden in het gedicht: {data['excluded_words']}"
-        prompt += ". Zorg ervoor dat de inhoud volledig gepast is voor alle leeftijden."
-
-        client = get_openai_client()
-        completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=2500
-        )
-
-        generated_text = completion.choices[0].message.content.strip()
-
-        if contains_blocked_content(generated_text):
+        # Check op ongepaste content in draft
+        combined_text = poem_draft.title + " " + " ".join(poem_draft.verses)
+        if contains_blocked_content(combined_text):
             raise ValueError("Gegenereerde inhoud bevat ongepaste termen")
 
-        return generated_text
+        final_poem = _check_and_fix_rhyme(poem_draft, structured_input, data)
+        combined_text_final = final_poem.title + " " + " ".join(final_poem.verses)
+        if contains_blocked_content(combined_text_final):
+            raise ValueError("Gegenereerde inhoud bevat ongepaste termen")
+
+        return final_poem
+
 
 class SinterklaasPoemCreateView(CreateView):
     model = Poem
@@ -212,6 +362,7 @@ class SinterklaasPoemCreateView(CreateView):
             poem.theme = 'SINTERKLAAS'
 
             try:
+                # Hier laten we de code voor Sinterklaas-gedicht ongewijzigd
                 poem.generated_text = self._generate_poem_with_retry(cleaned_data)
                 poem.full_clean()
                 poem.save()
@@ -244,6 +395,9 @@ class SinterklaasPoemCreateView(CreateView):
 
     @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
     def _generate_poem_with_retry(self, data):
+        """
+        Hier blijft de code voor SinterklaasPoemCreateView ongewijzigd.
+        """
         system_prompt = """Je bent een ervaren Sinterklaas dichter die prachtige Nederlandse gedichten schrijft.
 Je schrijft alleen familie-vriendelijke, gepaste gedichten.
 Vermijd onder alle omstandigheden ongepaste, seksuele of expliciete inhoud.
@@ -260,7 +414,7 @@ Voeg humor en persoonlijke details toe waar mogelijk."""
 
         client = get_openai_client()
         completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}

@@ -138,7 +138,6 @@
     </div>
 
     <script>
-        // Stijl informatie toevoegen
         const styleInfo = {
             'eenvoudig': 'Een gedicht in simpele taal dat door iedereen begrepen kan worden.',
             'modern': 'Een hedendaags gedicht zonder vaste regels, in vrije vorm.',
@@ -155,7 +154,6 @@
             'meditatief': 'Een rustig, beschouwend gedicht dat aanzet tot nadenken.'
         };
 
-        // Toon stijl informatie wanneer een stijl wordt geselecteerd
         document.getElementById('style').addEventListener('change', function() {
             const info = styleInfo[this.value];
             const infoDiv = document.getElementById('style-info');
@@ -198,7 +196,16 @@
                 const data = await response.json();
 
                 if (data.status === 'success') {
-                    poemDiv.textContent = data.poem;
+                    try {
+                        const poemData = JSON.parse(data.poem);
+                        poemDiv.innerHTML = `<h3 class="text-2xl font-bold mb-4 text-indigo-500">${poemData.title}</h3>`;
+                        poemData.verses.forEach(verse => {
+                            poemDiv.innerHTML += `<p class="mb-2">${verse}</p>`;
+                        });
+                    } catch (err) {
+                        poemDiv.textContent = data.poem;
+                    }
+
                     result.classList.remove('hidden');
                 } else {
                     errorMessage.textContent = data.message || 'Er is een fout opgetreden.';
