@@ -34,9 +34,10 @@ SECRET_KEY = env('SECRET_KEY', default='your-default-secret-key-here')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', default=False)
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')]
+print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'https://gedichtgpt.nl').split(',')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('CSRF_TRUSTED_ORIGINS', 'https://gedichtgpt.nl').split(',')]
 
 # Controleer of CSRF_TRUSTED_ORIGINS correct is ingesteld
 if not CSRF_TRUSTED_ORIGINS:
@@ -167,3 +168,5 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},  
     "loggers": {"": {"handlers": ["console"], "level": "DEBUG"}},  
 }
+
+print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
