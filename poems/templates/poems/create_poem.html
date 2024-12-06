@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GedichtGPT - AI Gedichten Generator</title>
+    <meta name="description" content="GedichtGPT: Dé plek om met behulp van AI (ChatGPT) prachtige gedichten te maken voor elke gelegenheid. Van sinterklaasgedichten tot kerst, van valentijnsdag tot trouwerij, en meer.">
+    <meta name="keywords" content="gedicht gpt, chatgpt gedicht maken, sinterklaasgedichten, kerstgedichten, valentijnsdag gedichten, trouwerij gedichten, AI gedichten generator">
+
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         .loading {
@@ -16,23 +19,30 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 class="text-4xl font-bold text-center mb-8 text-indigo-600">GedichtGPT</h1>
-        
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <form id="poemForm" class="space-y-4" method="post">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold text-center mb-4 text-indigo-600">GedichtGPT</h1>
+            <p class="text-center text-gray-700 text-lg">
+                Maak eenvoudig prachtige en persoonlijke gedichten voor elke gelegenheid met de kracht van AI.
+            </p>
+        </header>
+
+        <!-- Gedicht Generator Form -->
+        <section class="mb-12 bg-white rounded-lg shadow-lg p-6">
+            <form id="poemForm" class="space-y-6" method="post">
                 {% csrf_token %}
                 <div>
                     <label class="block text-gray-700 mb-2" for="theme">Thema</label>
                     <input type="text" id="theme" name="theme" 
-                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
                            placeholder="Bijv: liefde, sinterklaas, vriendschap, kerst, verjaardag, speciale gelegenheid">
                 </div>
 
                 <div>
                     <label class="block text-gray-700 mb-2" for="style">Stijl</label>
                     <select id="style" name="style" 
-                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400">
                         <optgroup label="Algemene stijlen">
                             <option value="eenvoudig">Eenvoudig (makkelijk te begrijpen)</option>
                             <option value="modern">Modern en vrij</option>
@@ -61,7 +71,7 @@
                 <div>
                     <label class="block text-gray-700 mb-2" for="mood">Stemming</label>
                     <select id="mood" name="mood" 
-                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400">
                         <option value="vrolijk">Vrolijk</option>
                         <option value="melancholisch">Melancholisch</option>
                         <option value="romantisch">Romantisch</option>
@@ -73,7 +83,7 @@
                 <div>
                     <label class="block text-gray-700 mb-2" for="season">Seizoen (optioneel)</label>
                     <select id="season" name="season" 
-                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400">
                         <option value="">Geen specifiek seizoen</option>
                         <option value="lente">Lente</option>
                         <option value="zomer">Zomer</option>
@@ -85,7 +95,7 @@
                 <div>
                     <label class="block text-gray-700 mb-2" for="length">Lengte</label>
                     <select id="length" name="length" 
-                            class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400">
                         <option value="kort">Kort</option>
                         <option value="medium">Gemiddeld</option>
                         <option value="lang">Lang</option>
@@ -95,32 +105,32 @@
                 <div>
                     <label class="block text-gray-700 mb-2" for="recipient">Voor wie is het gedicht?</label>
                     <input type="text" id="recipient" name="recipient" 
-                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                           placeholder="Bijvoorbeeld: mijn moeder, Lisa, mijn beste vriend">
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                           placeholder="Bijv: mijn moeder, Lisa, mijn beste vriend">
                 </div>
 
                 <div>
                     <label class="block text-gray-700 mb-2" for="excluded_words">Woorden die niet in het gedicht mogen voorkomen (optioneel)</label>
                     <input type="text" id="excluded_words" name="excluded_words" 
-                           class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                           placeholder="Bijvoorbeeld: roos, zee, zon (gescheiden door komma's)">
+                           class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                           placeholder="Bijv: roos, zee, zon (gescheiden door komma's)">
                     <p class="text-sm text-gray-500 mt-1">Laat leeg als je geen woorden wilt uitsluiten</p>
                 </div>
 
                 <button type="submit" 
-                        class="w-full bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition duration-200">
+                        class="w-full bg-indigo-600 text-white py-3 px-6 rounded hover:bg-indigo-700 transition duration-200">
                     Genereer Gedicht
                 </button>
             </form>
 
-            <div class="loading mt-4 justify-center items-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                <span class="ml-2 text-gray-600">Gedicht wordt gegenereerd...</span>
+            <div class="loading mt-6 justify-center items-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-indigo-600"></div>
+                <span class="ml-4 text-gray-600 text-lg">Gedicht wordt gegenereerd...</span>
             </div>
 
-            <div id="result" class="mt-6 hidden">
-                <h2 class="text-xl font-semibold mb-2 text-gray-700">Jouw Gedicht:</h2>
-                <div id="poem" class="whitespace-pre-wrap p-4 bg-gray-50 rounded border"></div>
+            <div id="result" class="mt-8 hidden">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Jouw Gedicht:</h2>
+                <div id="poem" class="whitespace-pre-wrap p-6 bg-gray-50 rounded border"></div>
             </div>
 
             <div id="error" class="mt-4 hidden p-4 bg-red-100 rounded">
@@ -134,7 +144,76 @@
                     Het systeem probeert het automatisch opnieuw... Even geduld.
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Informative Section for SEO -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Over GedichtGPT</h2>
+            <p class="text-gray-700 mb-4">
+                GedichtGPT is een innovatieve AI-gedichten generator die gebruik maakt van de kracht van ChatGPT om prachtige, gepersonaliseerde gedichten te creëren voor elke gelegenheid. Of je nu een liefdesgedicht voor Valentijnsdag wilt maken, een vrolijk sinterklaasgedicht, een sfeervol kerstgedicht, een inspirerend gedicht voor een trouwerij, of een gedicht voor een verjaardag – GedichtGPT maakt het eenvoudig en snel.
+            </p>
+            <p class="text-gray-700 mb-4">
+                Onze tool biedt een breed scala aan stijlen, waaronder traditionele rijmende gedichten, moderne vrije vormen, haiku's, limericks, sonnetten en acrostichons. Kies de stijl die het beste past bij jouw wensen en laat de AI jouw ideeën omzetten in een uniek meesterwerk.
+            </p>
+            <p class="text-gray-700 mb-4">
+                GedichtGPT is niet alleen veelzijdig in stijl, maar ook in thema en stemming. Of je nu een vrolijk, melancholisch, romantisch, inspirerend of rustig gedicht nodig hebt, onze tool houdt rekening met al jouw voorkeuren. Bovendien kun je specifieke woorden uitsluiten om ervoor te zorgen dat het gedicht precies aansluit bij jouw behoeften.
+            </p>
+            <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Waarom GedichtGPT?</h3>
+            <ul class="list-disc list-inside text-gray-700 mb-4">
+                <li><strong>Eenvoudig te gebruiken:</strong> Geen technische kennis nodig. Voer simpelweg je voorkeuren in en ontvang binnen enkele seconden een prachtig gedicht.</li>
+                <li><strong>Personalisatie:</strong> Pas het gedicht aan op basis van thema, stijl, stemming en specifieke wensen.</li>
+                <li><strong>Veelzijdigheid:</strong> Geschikt voor diverse gelegenheden zoals sinterklaas, kerst, valentijnsdag, trouwerijen, verjaardagen en meer.</li>
+                <li><strong>Unieke content:</strong> Elk gedicht is origineel en uniek, gegenereerd door AI.</li>
+                <li><strong>Snelheid:</strong> Ontvang je gedicht direct zonder wachttijd.</li>
+            </ul>
+            <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Hoe Werkt GedichtGPT?</h3>
+            <ol class="list-decimal list-inside text-gray-700 mb-4">
+                <li><strong>Selecteer een thema:</strong> Kies het onderwerp van je gedicht, zoals liefde, vriendschap, kerst, sinterklaas, etc.</li>
+                <li><strong>Kies een stijl:</strong> Selecteer de gewenste dichtvorm, zoals rijmend, haiku, limerick, sonnet, enzovoort.</li>
+                <li><strong>Stel de stemming in:</strong> Bepaal de emotionele toon van het gedicht, bijvoorbeeld vrolijk, melancholisch, romantisch, inspirerend of rustig.</li>
+                <li><strong>Pas extra opties aan:</strong> Selecteer het seizoen, de lengte van het gedicht en voeg eventueel woorden toe die niet in het gedicht mogen voorkomen.</li>
+                <li><strong>Genereer het gedicht:</strong> Klik op "Genereer Gedicht" en ontvang binnen enkele seconden een prachtig, persoonlijk gedicht.</li>
+            </ol>
+            <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Voorbeelden van Seizoensgebonden Gedichten</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-xl font-semibold text-indigo-600 mb-2">Sinterklaasgedichten</h4>
+                    <p class="text-gray-700">
+                        Vier de magie van Sinterklaas met een persoonlijk gedicht. Of het nu voor een kind, vriend of familielid is, onze AI maakt een vrolijk en origineel sinterklaasgedicht dat perfect past bij de ontvanger.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-xl font-semibold text-indigo-600 mb-2">Kerstgedichten</h4>
+                    <p class="text-gray-700">
+                        Breng warmte en vreugde in de kersttijd met een sfeervol kerstgedicht. Of je nu op zoek bent naar een traditioneel rijmend gedicht of een moderne vrije vorm, GedichtGPT levert precies wat je nodig hebt.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-xl font-semibold text-indigo-600 mb-2">Valentijnsdag Gedichten</h4>
+                    <p class="text-gray-700">
+                        Toon je liefde op een unieke manier met een persoonlijk Valentijnsdag gedicht. Onze AI helpt je om je gevoelens perfect te verwoorden in een prachtig gedicht dat je geliefde zeker zal waarderen.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-xl font-semibold text-indigo-600 mb-2">Trouwerij Gedichten</h4>
+                    <p class="text-gray-700">
+                        Maak de trouwerij van je dromen compleet met een prachtig trouwgedicht. Of het nu gaat om een officiële toespraak of een intiem gedicht voor de bruid en bruidegom, GedichtGPT biedt de perfecte woorden.
+                    </p>
+                </div>
+            </div>
+            <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Start Nu met Het Maken van Je Gedicht</h3>
+            <p class="text-gray-700 mb-4">
+                Het maken van een mooi gedicht is nog nooit zo eenvoudig geweest. Met GedichtGPT heb je de kracht van AI binnen handbereik om elke boodschap op een creatieve en persoonlijke manier over te brengen. Probeer het vandaag nog en ontdek hoe eenvoudig het is om prachtige gedichten te maken voor elke gelegenheid.
+            </p>
+            <p class="text-gray-700">
+                Zoekwoorden zoals <em>gedicht GPT</em> en <em>ChatGPT gedicht maken</em> helpen ons om jou te bereiken wanneer je op zoek bent naar originele poëzie. Laat GedichtGPT jouw inspiratiebron zijn en maak je eigen meesterwerk met slechts een paar klikken!
+            </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-gray-600 mt-12">
+            <p>&copy; 2024 GedichtGPT. Alle rechten voorbehouden.</p>
+        </footer>
     </div>
 
     <script>
