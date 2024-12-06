@@ -32,7 +32,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='your-default-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = env('DEBUG', default=False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 
@@ -143,7 +143,17 @@ RATELIMIT_USE_CACHE = 'default'
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # OpenAI settings
-OPENAI_API_KEY = env('OPENAI_API_KEY')
+from dotenv import load_dotenv
+import os
+
+# Laad het .env-bestand
+load_dotenv()
+
+# Lees de OpenAI API-key uit de omgeving
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+# Debug: controleer of de sleutel correct wordt ingeladen
+print(f"Loaded API key: {OPENAI_API_KEY}")
 
 LOGGING = {  
     "version": 1,  
