@@ -12,7 +12,10 @@
     <div class="container mx-auto px-4 py-8 max-w-4xl">
         <!-- Header -->
         <header class="mb-12 flex justify-between items-center">
-            <h1 class="text-5xl font-bold text-indigo-600">GedichtGPT</h1>
+            <div class="flex items-center space-x-4">
+                <h1 class="text-5xl font-bold text-indigo-600">GedichtGPT</h1>
+                <a href="{% url 'poem_create' %}" class="text-indigo-600 hover:underline">Naar Homepage</a>
+            </div>
             <div>
                 {% if user.is_authenticated %}
                     <span class="text-gray-700 mr-4">Credits: {{ user.profile.credits }}</span>
