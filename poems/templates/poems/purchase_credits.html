@@ -144,7 +144,7 @@
                 const {error} = await stripe.confirmPayment({
                     elements,
                     confirmParams: {
-                        return_url: 'https://gedichtgpt.nl/checkout/complete',
+                        return_url: "{% url 'checkout_complete' %}",
                     }
                 });
 

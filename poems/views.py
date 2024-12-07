@@ -323,7 +323,7 @@ class PoemCreateView(View):
 class CreditPurchaseView(LoginRequiredMixin, View):
     def get(self, request):
         credit_packages = [
-            {'name': 'Starter', 'credits': 1, 'price_cents': 50},
+            {'name': 'Starter', 'credits': 1, 'price_cents': 10},
             {'name': 'Economie', 'credits': 15, 'price_cents': 500},
         ]
         
@@ -344,7 +344,7 @@ class CreditPurchaseView(LoginRequiredMixin, View):
         try:
             data = json.loads(request.body)
             package = next((p for p in [
-                {'name': 'Starter', 'credits': 1, 'price_cents': 50},
+                {'name': 'Starter', 'credits': 1, 'price_cents': 10},
                 {'name': 'Economie', 'credits': 15, 'price_cents': 500},
             ] if p['name'] == data['package']), None)
 
@@ -540,3 +540,37 @@ Voeg humor en persoonlijke details toe waar mogelijk."""
             raise ValueError("Gegenereerde inhoud bevat ongepaste termen")
 
         return generated_text
+
+class CheckoutCompleteView(LoginRequiredMixin, View):
+    def get(self, request):
+        payment_intent_id = request.GET.get('payment_intent')
+        payment_intent_client_secret = request.GET.get('payment_intent_client_secret')
+        
+        try:
+            # Verify the payment intent
+            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            
+            if payment_intent.status == 'succeeded':
+                # Add credits to user's account
+                credits = payment_intent.metadata.get('credits', 0)
+                profile = request.user.profile
+                profile.credits += int(credits)
+                profile.save()
+                
+                return render(request, 'poems/purchase_complete.html', {
+                    'success': True,
+                    'credits_added': credits,
+                    'total_credits': profile.credits
+                })
+            else:
+                return render(request, 'poems/purchase_complete.html', {
+                    'success': False,
+                    'error': 'Betaling niet voltooid'
+                })
+                
+        except Exception as e:
+            logger.error(f"Error processing checkout completion: {str(e)}")
+            return render(request, 'poems/purchase_complete.html', {
+                'success': False,
+                'error': 'Er is een fout opgetreden bij het verwerken van de betaling'
+            })
