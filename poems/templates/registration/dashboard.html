@@ -9,48 +9,35 @@
     <meta name="keywords" content="dashboard gedicht gpt, beheer credits, gegenereerde gedichten, AI gedichten generator">
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Header -->
-        <header class="mb-12 flex justify-between items-center">
-            <h1 class="text-5xl font-bold text-indigo-600">GedichtGPT</h1>
-            <div>
-                {% if user.is_authenticated %}
-                    <span class="text-gray-700 mr-4">Credits: {{ user.profile.credits }}</span>
-                    <a href="{% url 'purchase_credits' %}" class="text-indigo-600 hover:underline mr-4">Koop Credits</a>
-                    <a href="{% url 'logout' %}" class="text-indigo-600 hover:underline">Uitloggen</a>
-                {% else %}
-                    <a href="{% url 'login' %}" class="text-indigo-600 hover:underline mr-4">Inloggen</a>
-                    <a href="{% url 'signup' %}" class="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition duration-200">Registreren</a>
-                {% endif %}
-            </div>
-        </header>
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h1 class="text-2xl font-bold text-purple-600 mb-4">Dashboard</h1>
+                
+                <div class="bg-purple-100 rounded-lg p-4 mb-6">
+                    <div class="flex justify-between items-center">
+                        <p class="text-purple-800">
+                            Je huidige credits: <span class="font-bold">{{ user.credits }}</span>
+                        </p>
+                        <a href="{% url 'purchase_credits' %}" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                            Credits Kopen
+                        </a>
+                    </div>
+                </div>
 
-        <!-- Gebruikers Dashboard -->
-        <section class="mb-12 bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Jouw Gedichten</h2>
-            <table class="min-w-full bg-white rounded-lg shadow-md">
-                <thead>
-                    <tr>
-                        <th class="py-2 px-4 border-b text-left text-gray-700">Titel</th>
-                        <th class="py-2 px-4 border-b text-left text-gray-700">Thema</th>
-                        <th class="py-2 px-4 border-b text-left text-gray-700">Datum</th>
-                        <th class="py-2 px-4 border-b text-center text-gray-700">Actie</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for poem in poems %}
-                        <tr>
-                            <td class="py-2 px-4 border-b text-gray-600">{{ poem.title }}</td>
-                            <td class="py-2 px-4 border-b text-gray-600">{{ poem.theme }}</td>
-                            <td class="py-2 px-4 border-b text-gray-600">{{ poem.created_at|date:"d-m-Y" }}</td>
-                            <td class="py-2 px-4 border-b text-center">
-                                <a href="{% url 'view_poem' poem.id %}" class="text-indigo-600 hover:underline">Bekijk</a>
-                            </td>
-                        </tr>
+                <h2 class="text-xl font-semibold mb-4">Jouw Gedichten</h2>
+                <div class="space-y-4">
+                    {% for poem in user_poems %}
+                    <div class="border rounded-lg p-4">
+                        <p class="whitespace-pre-wrap">{{ poem.content }}</p>
+                        <p class="text-sm text-gray-500 mt-2">Gemaakt op: {{ poem.created_at|date:"d-m-Y H:i" }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-600">Je hebt nog geen gedichten gemaakt.</p>
                     {% endfor %}
-                </tbody>
-            </table>
-        </section>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
