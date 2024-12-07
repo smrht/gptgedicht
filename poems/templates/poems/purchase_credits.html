@@ -48,7 +48,7 @@
 
         <form id="payment-form">
             {% csrf_token %}
-            <div id="card-element" class="p-3 border rounded mb-4"></div>
+            <div id="payment-element" class="p-3 border rounded mb-4"></div>
             <button type="submit" id="submit-button" class="w-full bg-indigo-600 text-white py-3 px-6 rounded hover:bg-indigo-700 transition duration-200" disabled>
                 Betaal en Koop Credits
             </button>
@@ -62,112 +62,101 @@
 
     <script>
         const stripe = Stripe('{{ stripe_public_key }}');
-        const elements = stripe.elements();
-        const card = elements.create('card', {
-            style: {
-                base: {
-                    fontSize: '16px',
-                    color: '#32325d',
-                    fontFamily: '"Poppins", sans-serif',
-                    '::placeholder': {
-                        color: '#aab7c4'
-                    }
-                },
-                invalid: {
-                    color: '#fa755a',
-                    iconColor: '#fa755a'
-                }
+        
+        // Create payment element options
+        const appearance = {
+            theme: 'stripe',
+            variables: {
+                colorPrimary: '#4F46E5',
             }
-        });
-        const submitButton = document.getElementById('submit-button');
-        card.mount('#card-element');
+        };
 
-        card.addEventListener('change', function(event) {
-            if (event.error) {
-                errorMessage.textContent = event.error.message;
-            } else {
-                errorMessage.textContent = '';
-            }
-        });
-
-        let selectedPackage = null;
+        let elements;
+        let paymentElement;
 
         document.querySelectorAll('.buy-button').forEach(button => {
-            button.addEventListener('click', () => {
+            button.addEventListener('click', async () => {
+                // Reset UI
                 document.querySelectorAll('.buy-button').forEach(btn => {
                     btn.classList.remove('bg-green-600');
                     btn.classList.add('bg-indigo-600');
                 });
                 button.classList.remove('bg-indigo-600');
                 button.classList.add('bg-green-600');
-                selectedPackage = button.getAttribute('data-package');
-                submitButton.disabled = false;
-                const price = button.closest('tr').querySelector('td:nth-child(3)').textContent;
-                submitButton.textContent = `Betaal ${price} en Koop Credits`;
+
+                const packageName = button.getAttribute('data-package');
+                
+                try {
+                    // Create PaymentIntent
+                    const response = await fetch("{% url 'purchase_credits' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify({ package: packageName })
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    // Create Elements instance
+                    elements = stripe.elements({
+                        appearance,
+                        clientSecret: data.clientSecret
+                    });
+
+                    // Create and mount the Payment Element
+                    if (paymentElement) {
+                        paymentElement.destroy();
+                    }
+                    paymentElement = elements.create('payment');
+                    paymentElement.mount('#payment-element');
+
+                    // Enable submit button
+                    const submitButton = document.getElementById('submit-button');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Betaal en Koop Credits';
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('error-message').textContent = error.message;
+                }
             });
         });
 
+        // Handle form submission
         const form = document.getElementById('payment-form');
-        const errorMessage = document.getElementById('error-message');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            const submitButton = document.getElementById('submit-button');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
             submitButton.disabled = true;
             submitButton.textContent = 'Bezig met verwerken...';
-
-            if (!selectedPackage) {
-                errorMessage.textContent = 'Selecteer eerst een pakket.';
-                submitButton.disabled = false;
-                submitButton.textContent = 'Betaal en Koop Credits';
-                return;
-            }
+            errorMessage.textContent = '';
 
             try {
-                const response = await fetch("{% url 'purchase_credits' %}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    },
-                    body: JSON.stringify({ package: selectedPackage })
-                });
-
-                const data = await response.json();
-
-                if (data.error) {
-                    errorMessage.textContent = data.error;
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Betaal en Koop Credits';
-                    return;
-                }
-
-                const result = await stripe.confirmCardPayment(data.client_secret, {
-                    payment_method: {
-                        card: card,
-                        billing_details: {
-                            name: '{{ user.username }}',
-                            email: '{{ user.email }}'
-                        },
+                const {error} = await stripe.confirmPayment({
+                    elements,
+                    confirmParams: {
+                        return_url: 'https://gedichtgpt.nl/checkout/complete',
                     }
                 });
 
-                if (result.error) {
-                    errorMessage.textContent = result.error.message;
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Betaal en Koop Credits';
-                } else {
-                    if (result.paymentIntent.status === 'succeeded') {
-                        const successMessage = document.getElementById('success-message');
-                        successMessage.textContent = 'Betaling succesvol! Je wordt nu doorgestuurd...';
-                        successMessage.classList.remove('hidden');
-                        setTimeout(() => {
-                            window.location.href = '{% url "poem_create" %}';
-                        }, 2000);
-                    }
+                if (error) {
+                    throw error;
                 }
+
+                // Payment successful
+                successMessage.classList.remove('hidden');
+                
             } catch (error) {
-                console.error('Error:', error);
-                errorMessage.textContent = 'Er is een fout opgetreden. Probeer het opnieuw.';
+                errorMessage.textContent = error.message;
                 submitButton.disabled = false;
                 submitButton.textContent = 'Betaal en Koop Credits';
             }

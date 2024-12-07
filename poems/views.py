@@ -322,85 +322,91 @@ class PoemCreateView(View):
 
 class CreditPurchaseView(LoginRequiredMixin, View):
     def get(self, request):
-        # Definieer credit pakketten
         credit_packages = [
-            {'name': 'Starter', 'credits': 1, 'price_cents': 50},  # €0,50
-            {'name': 'Economie', 'credits': 15, 'price_cents': 500},  # €5.00
+            {'name': 'Starter', 'credits': 1, 'price_cents': 50},
+            {'name': 'Economie', 'credits': 15, 'price_cents': 500},
         ]
+        
+        # Beschikbare betaalmethoden per land
+        payment_methods = {
+            'nl': ['ideal', 'card'],
+            'be': ['bancontact', 'card'],
+            'other': ['card']
+        }
+        
         return render(request, 'poems/purchase_credits.html', {
             'credit_packages': credit_packages,
-            'stripe_public_key': settings.STRIPE_PUBLIC_KEY
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'payment_methods': payment_methods,
         })
 
     def post(self, request):
         try:
             data = json.loads(request.body)
-            print(f"Received purchase request for package: {data['package']}")
-            
             package = next((p for p in [
                 {'name': 'Starter', 'credits': 1, 'price_cents': 50},
-                {'name': 'Economie', 'credits': 15, 'price_cents': 5000},
+                {'name': 'Economie', 'credits': 15, 'price_cents': 500},
             ] if p['name'] == data['package']), None)
 
             if not package:
-                print(f"Invalid package requested: {data['package']}")
                 return JsonResponse({'error': 'Ongeldig pakket'}, status=400)
 
-            print(f"Creating payment intent for {package['credits']} credits, amount: {package['price_cents']}")
-            intent = stripe.PaymentIntent.create(
+            # Create PaymentIntent with automatic payment methods
+            payment_intent = stripe.PaymentIntent.create(
                 amount=package['price_cents'],
                 currency='eur',
-                metadata={'user_id': request.user.id, 'credits': package['credits']}
+                metadata={
+                    'user_id': request.user.id,
+                    'credits': package['credits']
+                },
+                automatic_payment_methods={
+                    'enabled': True,
+                }
             )
 
-            print(f"Payment intent created: {intent.id}")
-            return JsonResponse({'client_secret': intent.client_secret})
+            return JsonResponse({
+                'clientSecret': payment_intent.client_secret,
+                'amount': package['price_cents'],
+                'currency': 'eur'
+            })
+
         except Exception as e:
-            print(f"Error creating payment intent: {str(e)}")
+            logger.error(f"Error creating payment intent: {str(e)}")
             return JsonResponse({'error': str(e)}, status=400)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class StripeWebhookView(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def post(self, request):
         payload = request.body
-        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-        event = None
+        sig_header = request.META['HTTP_STRIPE_SIGNATURE']
 
         try:
             event = stripe.Webhook.construct_event(
                 payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
             )
-        except ValueError as e:
-            print(f"Error parsing webhook payload: {str(e)}")
-            return JsonResponse({'error': 'Invalid payload'}, status=400)
-        except stripe.error.SignatureVerificationError as e:
-            print(f"Invalid signature: {str(e)}")
-            return JsonResponse({'error': 'Invalid signature'}, status=400)
 
-        # Voeg extra logging toe
-        print(f"Received webhook event type: {event['type']}")
-        print(f"Event data: {event['data']}")
-
-        if event['type'] == 'payment_intent.succeeded':
-            try:
+            if event['type'] == 'payment_intent.succeeded':
                 payment_intent = event['data']['object']
-                user_id = payment_intent['metadata']['user_id']
-                credits = int(payment_intent['metadata']['credits'])
                 
-                print(f"Processing payment for user {user_id}: {credits} credits")
+                # Verwerk de succesvolle betaling
+                user_id = payment_intent.metadata.get('user_id')
+                credits = int(payment_intent.metadata.get('credits', 0))
                 
-                user = User.objects.get(id=user_id)
-                user.profile.credits += credits
-                user.profile.save()
-                
-                print(f"Credits added successfully. New balance: {user.profile.credits}")
-                
-            except Exception as e:
-                print(f"Error processing payment: {str(e)}")
-                return JsonResponse({'error': str(e)}, status=400)
+                if user_id and credits:
+                    user = User.objects.get(id=user_id)
+                    profile = user.profile
+                    profile.credits += credits
+                    profile.save()
 
-        return JsonResponse({'status': 'success'})
+            return JsonResponse({'status': 'success'})
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
 class CustomLoginView(View):
     def get(self, request):

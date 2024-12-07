@@ -1,0 +1,56 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - GedichtGPT</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <meta name="description" content="Dashboard van GedichtGPT waar je je credits en gegenereerde gedichten kunt beheren.">
+    <meta name="keywords" content="dashboard gedicht gpt, beheer credits, gegenereerde gedichten, AI gedichten generator">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="mb-12 flex justify-between items-center">
+            <h1 class="text-5xl font-bold text-indigo-600">GedichtGPT</h1>
+            <div>
+                {% if user.is_authenticated %}
+                    <span class="text-gray-700 mr-4">Credits: {{ user.profile.credits }}</span>
+                    <a href="{% url 'purchase_credits' %}" class="text-indigo-600 hover:underline mr-4">Koop Credits</a>
+                    <a href="{% url 'logout' %}" class="text-indigo-600 hover:underline">Uitloggen</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-indigo-600 hover:underline mr-4">Inloggen</a>
+                    <a href="{% url 'signup' %}" class="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition duration-200">Registreren</a>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Gebruikers Dashboard -->
+        <section class="mb-12 bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Jouw Gedichten</h2>
+            <table class="min-w-full bg-white rounded-lg shadow-md">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b text-left text-gray-700">Titel</th>
+                        <th class="py-2 px-4 border-b text-left text-gray-700">Thema</th>
+                        <th class="py-2 px-4 border-b text-left text-gray-700">Datum</th>
+                        <th class="py-2 px-4 border-b text-center text-gray-700">Actie</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for poem in poems %}
+                        <tr>
+                            <td class="py-2 px-4 border-b text-gray-600">{{ poem.title }}</td>
+                            <td class="py-2 px-4 border-b text-gray-600">{{ poem.theme }}</td>
+                            <td class="py-2 px-4 border-b text-gray-600">{{ poem.created_at|date:"d-m-Y" }}</td>
+                            <td class="py-2 px-4 border-b text-center">
+                                <a href="{% url 'view_poem' poem.id %}" class="text-indigo-600 hover:underline">Bekijk</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+</body>
+</html>

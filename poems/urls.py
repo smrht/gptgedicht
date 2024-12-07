@@ -8,6 +8,7 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('signup/', SignupView.as_view(), name='signup'),
+    path('checkout/complete/', CreditPurchaseView.as_view(), name='purchase_complete'),
     
     # Dashboard, credits etc. volgen verderop.
     path('dashboard/', DashboardView.as_view(), name='dashboard'),

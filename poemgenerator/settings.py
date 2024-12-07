@@ -32,7 +32,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='your-default-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = env('DEBUG', default=False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
     'localhost',
@@ -139,7 +139,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = env.str('STATIC_URL', default='/static/')
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+STATIC_ROOT = env.str('STATIC_ROOT', default=str(BASE_DIR / 'staticfiles'))
 
 MEDIA_ROOT = env.str('MEDIA_ROOT', default=str(BASE_DIR / 'media'))
 MEDIA_URL = env.str('MEDIA_URL', default='/media/')
@@ -179,9 +179,9 @@ LOGGING = {
 }
 
 # settings.py
-STRIPE_PUBLIC_KEY = 'pk_test_51N5BPdCAxCUhnhuH0DT18MasGbnlXlrzOeQbo7X7hZH4aS9TPQGG37sbXAxYAQFVDtlUv9iPepiK6fA5zrDxI1Fx00gINAKr9u'
-STRIPE_SECRET_KEY = 'sk_test_51N5BPdCAxCUhnhuHTZGsm791sXBQUiLEl2sFcrXU9vKhJ2g6KEF9aO7UMdnz7iDTEajl00jqC10bBV0vkZbbwJtr00PClMUgaL'
-STRIPE_WEBHOOK_SECRET = 'whsec_NPhpUqW32Bv3JS4BJsFGOG0vMaHb7DlA'
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
