@@ -2,6 +2,8 @@ from django import forms
 from .models import Poem
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Field, Div
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
 class PoemForm(forms.ModelForm):
     class Meta:
@@ -87,3 +89,11 @@ class SinterklaasPoemForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class SignupForm(UserCreationForm):
+    email = forms.EmailField(required=True, help_text="Voer een geldig e-mailadres in.")
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2')

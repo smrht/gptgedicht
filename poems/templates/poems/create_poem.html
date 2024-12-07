@@ -3,8 +3,8 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GedichtGPT - AI Gedichten Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="GedichtGPT: Dé plek om met behulp van AI (ChatGPT) prachtige gedichten te maken voor elke gelegenheid. Van sinterklaasgedichten tot kerst, van valentijnsdag tot trouwerij, en meer.">
     <meta name="keywords" content="gedicht gpt, chatgpt gedicht maken, sinterklaasgedichten, kerstgedichten, valentijnsdag gedichten, trouwerij gedichten, AI gedichten generator">
 
@@ -20,13 +20,34 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Header -->
-        <header class="mb-12">
-            <h1 class="text-5xl font-bold text-center mb-4 text-indigo-600">GedichtGPT</h1>
-            <p class="text-center text-gray-700 text-lg">
-                Maak eenvoudig prachtige en persoonlijke gedichten voor elke gelegenheid met de kracht van AI.
-            </p>
+        <!-- Header met authenticatie en credits -->
+        <header class="mb-12 flex justify-between items-center">
+            <div>
+                <h1 class="text-5xl font-bold text-indigo-600">GedichtGPT</h1>
+                <p class="text-gray-700 text-lg">Maak eenvoudig prachtige en persoonlijke gedichten met AI.</p>
+            </div>
+            <div>
+                {% if user.is_authenticated %}
+                    <span class="text-gray-700 mr-4">Credits: {{ user.profile.credits }}</span>
+                    <a href="{% url 'purchase_credits' %}" class="text-indigo-600 hover:underline mr-4">Koop Credits</a>
+                    <a href="{% url 'logout' %}" class="text-indigo-600 hover:underline">Uitloggen</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-indigo-600 hover:underline mr-4">Inloggen</a>
+                    <a href="{% url 'signup' %}" class="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition duration-200">Registreren</a>
+                {% endif %}
+            </div>
         </header>
+
+        <!-- Uitleg over gratis gebruik en credits -->
+        <section class="mb-12 bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Gratis & Creditsysteem</h2>
+            <p class="text-gray-700 mb-4">
+                Elke bezoeker kan gratis 2 gedichten genereren. Voor anonieme gebruikers geldt dit per dag, voor ingelogde gebruikers per maand. Wil je meer gedichten maken dan de gratis limiet toestaat? Schaf eenvoudig credits aan! 
+            </p>
+            <p class="text-gray-700 mb-4">
+                1 credit = 1 gedicht. Je kunt kiezen uit verschillende credit pakketten. Zo betaal je alleen voor wat je daadwerkelijk gebruikt, zonder maandelijkse verplichtingen.
+            </p>
+        </section>
 
         <!-- Gedicht Generator Form -->
         <section class="mb-12 bg-white rounded-lg shadow-lg p-6">
@@ -203,11 +224,53 @@
             </div>
             <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Start Nu met Het Maken van Je Gedicht</h3>
             <p class="text-gray-700 mb-4">
-                Het maken van een mooi gedicht is nog nooit zo eenvoudig geweest. Met GedichtGPT heb je de kracht van AI binnen handbereik om elke boodschap op een creatieve en persoonlijke manier over te brengen. Probeer het vandaag nog en ontdek hoe eenvoudig het is om prachtige gedichten te maken voor elke gelegenheid.
+                Het maken van een mooi gedicht is nog nooit zo eenvoudig geweest. Met GedichtGPT heb je de kracht van AI binnen handbereik. Probeer het vandaag nog en ontdek hoe eenvoudig het is om prachtige gedichten te maken voor elke gelegenheid.
             </p>
             <p class="text-gray-700">
                 Zoekwoorden zoals <em>gedicht GPT</em> en <em>ChatGPT gedicht maken</em> helpen ons om jou te bereiken wanneer je op zoek bent naar originele poëzie. Laat GedichtGPT jouw inspiratiebron zijn en maak je eigen meesterwerk met slechts een paar klikken!
             </p>
+        </section>
+
+        <!-- Credit Pakketten -->
+        <section class="mb-12 bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Koop Credits</h3>
+            <p class="text-gray-700 mb-4">
+                Wil je na je gratis limiet meer gedichten maken? Met credits betaal je alleen voor wat je gebruikt. 
+                Koop ze in kleine of grote hoeveelheden, geheel naar jouw behoefte.
+            </p>
+            <table class="min-w-full bg-white rounded-lg shadow-md">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b text-left text-gray-700">Pakket</th>
+                        <th class="py-2 px-4 border-b text-center text-gray-700">Credits</th>
+                        <th class="py-2 px-4 border-b text-center text-gray-700">Prijs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="py-2 px-4 border-b text-gray-600">Starter</td>
+                        <td class="py-2 px-4 border-b text-center text-gray-600">1</td>
+                        <td class="py-2 px-4 border-b text-center text-gray-600">€0,50</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-4 border-b text-gray-600">Economie</td>
+                        <td class="py-2 px-4 border-b text-center text-gray-600">15</td>
+                        <td class="py-2 px-4 border-b text-center text-gray-600">€5,00</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="mt-6 text-center">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'purchase_credits' %}" class="inline-block bg-indigo-600 text-white py-3 px-6 rounded hover:bg-indigo-700 transition duration-200">
+                        Koop Credits
+                    </a>
+                {% else %}
+                    <p class="text-gray-700">
+                        Maak een account of log in om credits te kopen.
+                    </p>
+                {% endif %}
+            </div>
         </section>
 
         <!-- Footer -->
@@ -264,32 +327,39 @@
 
             try {
                 const formData = new FormData(e.target);
-                const response = await fetch(window.location.href, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
+                // Zet formData om naar JSON
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
                 });
 
-                const data = await response.json();
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify(data)
+                });
 
-                if (data.status === 'success') {
+                const responseData = await response.json();
+
+                if (responseData.status === 'success') {
                     try {
-                        const poemData = JSON.parse(data.poem);
+                        const poemData = JSON.parse(responseData.poem);
                         poemDiv.innerHTML = `<h3 class="text-2xl font-bold mb-4 text-indigo-500">${poemData.title}</h3>`;
                         poemData.verses.forEach(verse => {
                             poemDiv.innerHTML += `<p class="mb-2">${verse}</p>`;
                         });
                     } catch (err) {
-                        poemDiv.textContent = data.poem;
+                        poemDiv.textContent = responseData.poem;
                     }
 
                     result.classList.remove('hidden');
                 } else {
-                    errorMessage.textContent = data.message || 'Er is een fout opgetreden.';
+                    errorMessage.textContent = responseData.message || 'Er is een fout opgetreden.';
                     errorDiv.classList.remove('hidden');
-                    if (response.status === 429) {
+                    if (response.status === 429 || response.status === 402) {
                         retryInfo.classList.remove('hidden');
                     }
                 }

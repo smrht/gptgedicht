@@ -1,10 +1,26 @@
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.db.models import Count
 from datetime import timedelta
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-# Create your models here.
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    credits = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.username} Profile"
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
 
 class Poem(models.Model):
     STYLE_CHOICES = [
@@ -45,18 +61,14 @@ class Poem(models.Model):
         ('lang', 'Lang'),
     ]
 
-    # Required fields
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     theme = models.CharField(max_length=200, help_text="Het thema van het gedicht")
     style = models.CharField(max_length=20, choices=STYLE_CHOICES, default='rijmend')
     mood = models.CharField(max_length=20, choices=MOOD_CHOICES, default='vrolijk')
-    
-    # Optional fields
     season = models.CharField(max_length=10, choices=SEASON_CHOICES, default='', blank=True)
     length = models.CharField(max_length=10, choices=LENGTH_CHOICES, default='medium')
     recipient = models.CharField(max_length=200, blank=True, help_text="Voor wie is het gedicht bedoeld?")
     excluded_words = models.TextField(blank=True, help_text="Woorden die niet in het gedicht mogen voorkomen")
-    
-    # Generated content and metadata
     generated_text = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
     ip_address = models.GenericIPAddressField(help_text="IP adres van de gebruiker", default='127.0.0.1')
@@ -73,24 +85,37 @@ class Poem(models.Model):
         return f"{base} ({self.created_at.strftime('%d-%m-%Y')})"
 
     @classmethod
-    def check_rate_limit(cls, ip_address):
-        """
-        Check if the IP address has exceeded the rate limit.
-        Returns True if the limit is exceeded, False otherwise.
-        """
-        time_threshold = timezone.now() - timedelta(days=1)  # Last 24 hours
-        poems_count = cls.objects.filter(
-            ip_address=ip_address,
-            created_at__gte=time_threshold
-        ).count()
-        return poems_count >= 2  # Limit to 2 poems per IP per day
+    def check_rate_limit(cls, ip_address, user=None):
+        # Als de gebruiker ingelogd is, kunnen we voor de gratis limiet per maand checken.
+        # Anders, per dag op IP-basis.
+        if user and user.is_authenticated:
+            # Gratis limiet per maand voor ingelogde gebruikers
+            now = timezone.now()
+            month = now.month
+            year = now.year
+            poems_count = cls.objects.filter(user=user, created_at__month=month, created_at__year=year).count()
+            return poems_count >= 2
+        else:
+            # Anonieme gebruikers: dagelijks limiet op IP
+            time_threshold = timezone.now() - timedelta(days=1)
+            poems_count = cls.objects.filter(
+                ip_address=ip_address,
+                created_at__gte=time_threshold
+            ).count()
+            return poems_count >= 2
 
     def clean(self):
-        """
-        Validate that the IP address hasn't exceeded the rate limit
-        """
-        if self.ip_address and self.check_rate_limit(self.ip_address):
-            raise ValidationError(
-                'Je hebt het maximale aantal gedichten (2) voor vandaag bereikt. '
-                'Probeer het morgen opnieuw.'
-            )
+        # Gebruikerslimiet checken
+        if self.user and self.user.is_authenticated:
+            # Als gebruiker al >2 in deze maand heeft gemaakt en geen credits heeft
+            if Poem.check_rate_limit(ip_address=self.ip_address, user=self.user) and self.user.profile.credits < 1:
+                raise ValidationError(
+                    'Je hebt het maximale aantal gratis gedichten (2) voor deze maand bereikt. Koop credits om meer te genereren.'
+                )
+        else:
+            # Anonieme gebruikers check:
+            if Poem.check_rate_limit(ip_address=self.ip_address):
+                raise ValidationError(
+                    'Je hebt het maximale aantal gedichten (2) voor vandaag bereikt. '
+                    'Maak een account en koop credits om meer te genereren.'
+                )

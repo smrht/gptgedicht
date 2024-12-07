@@ -32,12 +32,21 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='your-default-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG', default=False)
+DEBUG = False
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')]
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
+    'localhost',
+    '127.0.0.1',
+    '.ngrok-free.app',
+])
+
+# Debug: print ALLOWED_HOSTS to verify
 print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('CSRF_TRUSTED_ORIGINS', 'https://gedichtgpt.nl').split(',')]
+CSRF_TRUSTED_ORIGINS = [
+    'https://gedichtgpt.nl',
+    'https://*.ngrok-free.app',
+]
 
 # Controleer of CSRF_TRUSTED_ORIGINS correct is ingesteld
 if not CSRF_TRUSTED_ORIGINS:
@@ -55,11 +64,13 @@ INSTALLED_APPS = [
     "poems",
     "crispy_forms",
     "crispy_bootstrap5",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [  
     "django.middleware.security.SecurityMiddleware",  
     "whitenoise.middleware.WhiteNoiseMiddleware",   # <-- here
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",  
     "django.middleware.common.CommonMiddleware",  
     "django.middleware.csrf.CsrfViewMiddleware",  
@@ -73,7 +84,7 @@ ROOT_URLCONF = "poemgenerator.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -128,7 +139,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = env.str('STATIC_URL', default='/static/')
-STATIC_ROOT = env.str('STATIC_ROOT', default=str(BASE_DIR / 'staticfiles'))
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 MEDIA_ROOT = env.str('MEDIA_ROOT', default=str(BASE_DIR / 'media'))
 MEDIA_URL = env.str('MEDIA_URL', default='/media/')
@@ -159,8 +170,6 @@ load_dotenv()
 # Lees de OpenAI API-key uit de omgeving
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-# Debug: controleer of de sleutel correct wordt ingeladen
-print(f"Loaded API key: {OPENAI_API_KEY}")
 
 LOGGING = {  
     "version": 1,  
@@ -169,4 +178,24 @@ LOGGING = {
     "loggers": {"": {"handlers": ["console"], "level": "DEBUG"}},  
 }
 
-print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+# settings.py
+STRIPE_PUBLIC_KEY = 'pk_test_51N5BPdCAxCUhnhuH0DT18MasGbnlXlrzOeQbo7X7hZH4aS9TPQGG37sbXAxYAQFVDtlUv9iPepiK6fA5zrDxI1Fx00gINAKr9u'
+STRIPE_SECRET_KEY = 'sk_test_51N5BPdCAxCUhnhuHTZGsm791sXBQUiLEl2sFcrXU9vKhJ2g6KEF9aO7UMdnz7iDTEajl00jqC10bBV0vkZbbwJtr00PClMUgaL'
+STRIPE_WEBHOOK_SECRET = 'whsec_NPhpUqW32Bv3JS4BJsFGOG0vMaHb7DlA'
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    'https://gedichtgpt.nl',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.ngrok-free\.app$",
+]
+
+# Authentication settings
+LOGIN_REDIRECT_URL = '/'  # Redirect naar homepage na inloggen
+LOGOUT_REDIRECT_URL = '/'  # Redirect naar homepage na uitloggen
+LOGIN_URL = 'login'  # URL voor de login pagina

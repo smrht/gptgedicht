@@ -1,0 +1,177 @@
+{% load crispy_forms_tags %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Credits Kopen - GedichtGPT</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+    <meta name="description" content="Koop credits bij GedichtGPT om onbeperkt gedichten te genereren. Kies uit verschillende pakketten die passen bij jouw behoeften.">
+    <meta name="keywords" content="credits kopen, gedicht gpt, chatgpt gedicht maken, koop credits, AI gedichten generator">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full">
+        <div class="text-center mb-4">
+            <a href="{% url 'poem_create' %}" 
+               class="inline-block text-sm text-gray-500 hover:text-indigo-600 transition-colors">
+                ← Terug naar Home
+            </a>
+        </div>
+        <h2 class="text-3xl font-bold mb-6 text-indigo-600 text-center">Koop Credits</h2>
+        <div class="mb-6">
+            <table class="min-w-full bg-white rounded-lg shadow-md">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 border-b text-left text-gray-700">Pakket</th>
+                        <th class="py-2 px-4 border-b text-center text-gray-700">Credits</th>
+                        <th class="py-2 px-4 border-b text-center text-gray-700">Prijs</th>
+                        <th class="py-2 px-4 border-b text-center text-gray-700">Actie</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for package in credit_packages %}
+                        <tr>
+                            <td class="py-2 px-4 border-b text-gray-600">{{ package.name }}</td>
+                            <td class="py-2 px-4 border-b text-center text-gray-600">{{ package.credits }}</td>
+                            <td class="py-2 px-4 border-b text-center text-gray-600">€{{ package.price_cents|divided_by:100|floatformat:2 }}</td>
+                            <td class="py-2 px-4 border-b text-center">
+                                <button class="buy-button bg-indigo-600 text-white py-1 px-3 rounded hover:bg-indigo-700 transition duration-200" data-package="{{ package.name }}">
+                                    Koop
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <form id="payment-form">
+            {% csrf_token %}
+            <div id="card-element" class="p-3 border rounded mb-4"></div>
+            <button type="submit" id="submit-button" class="w-full bg-indigo-600 text-white py-3 px-6 rounded hover:bg-indigo-700 transition duration-200" disabled>
+                Betaal en Koop Credits
+            </button>
+        </form>
+
+        <div id="error-message" class="text-red-600 mt-4"></div>
+        <div id="success-message" class="text-green-600 mt-4 hidden">
+            Betaling succesvol! Je credits worden nu bijgewerkt...
+        </div>
+    </div>
+
+    <script>
+        const stripe = Stripe('{{ stripe_public_key }}');
+        const elements = stripe.elements();
+        const card = elements.create('card', {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#32325d',
+                    fontFamily: '"Poppins", sans-serif',
+                    '::placeholder': {
+                        color: '#aab7c4'
+                    }
+                },
+                invalid: {
+                    color: '#fa755a',
+                    iconColor: '#fa755a'
+                }
+            }
+        });
+        const submitButton = document.getElementById('submit-button');
+        card.mount('#card-element');
+
+        card.addEventListener('change', function(event) {
+            if (event.error) {
+                errorMessage.textContent = event.error.message;
+            } else {
+                errorMessage.textContent = '';
+            }
+        });
+
+        let selectedPackage = null;
+
+        document.querySelectorAll('.buy-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.buy-button').forEach(btn => {
+                    btn.classList.remove('bg-green-600');
+                    btn.classList.add('bg-indigo-600');
+                });
+                button.classList.remove('bg-indigo-600');
+                button.classList.add('bg-green-600');
+                selectedPackage = button.getAttribute('data-package');
+                submitButton.disabled = false;
+                const price = button.closest('tr').querySelector('td:nth-child(3)').textContent;
+                submitButton.textContent = `Betaal ${price} en Koop Credits`;
+            });
+        });
+
+        const form = document.getElementById('payment-form');
+        const errorMessage = document.getElementById('error-message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitButton.disabled = true;
+            submitButton.textContent = 'Bezig met verwerken...';
+
+            if (!selectedPackage) {
+                errorMessage.textContent = 'Selecteer eerst een pakket.';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Betaal en Koop Credits';
+                return;
+            }
+
+            try {
+                const response = await fetch("{% url 'purchase_credits' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ package: selectedPackage })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    errorMessage.textContent = data.error;
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Betaal en Koop Credits';
+                    return;
+                }
+
+                const result = await stripe.confirmCardPayment(data.client_secret, {
+                    payment_method: {
+                        card: card,
+                        billing_details: {
+                            name: '{{ user.username }}',
+                            email: '{{ user.email }}'
+                        },
+                    }
+                });
+
+                if (result.error) {
+                    errorMessage.textContent = result.error.message;
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Betaal en Koop Credits';
+                } else {
+                    if (result.paymentIntent.status === 'succeeded') {
+                        const successMessage = document.getElementById('success-message');
+                        successMessage.textContent = 'Betaling succesvol! Je wordt nu doorgestuurd...';
+                        successMessage.classList.remove('hidden');
+                        setTimeout(() => {
+                            window.location.href = '{% url "poem_create" %}';
+                        }, 2000);
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = 'Er is een fout opgetreden. Probeer het opnieuw.';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Betaal en Koop Credits';
+            }
+        });
+    </script>
+</body>
+</html>

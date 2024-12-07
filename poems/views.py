@@ -4,18 +4,33 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
 from django.urls import reverse_lazy
-from django.views.generic import CreateView
+from django.views.generic import CreateView, View
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.core.exceptions import ValidationError
 from pydantic import BaseModel
-from .models import Poem
+from .models import Poem, Profile
 from .forms import PoemForm, SinterklaasPoemForm
 from .utils import contains_blocked_content, retry_with_exponential_backoff
 from openai import OpenAI
+from django.utils import timezone
+from datetime import datetime, timedelta
+from django.contrib.auth.mixins import LoginRequiredMixin
+import stripe
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+
+from .forms import SignupForm
+from .models import Poem, Profile
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
 
 class PoemSchema(BaseModel):
     title: str
@@ -81,9 +96,7 @@ def beschrijf_stijl_op_basis_van_de_user_input(data):
         return "Maak het gedicht eenvoudig: simpele taal, door iedereen te begrijpen."
     elif style == 'rijmend':
         return "Maak het gedicht rijmend: traditioneel met een duidelijk hoorbaar rijmschema."
-    elif style == 'grappig':
-        return "Maak het gedicht grappig: humoristische toon, luchtige sfeer."
-    # Als er geen specifieke stijl is, gewoon een rijmend gedicht
+    # Als er geen specifieke stijl wordt gevonden, default naar rijmend
     return "Gebruik een passende stijl bij het gekozen thema en stemming, met duidelijke vorm."
 
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
@@ -104,7 +117,7 @@ def _process_user_input(data):
 
     system_prompt = """Je bent een planner die op basis van gebruikersinvoer een duidelijke instructie maakt om een perfect gedicht te schrijven.
 Specificeer minimaal:
- - een rijmschema of vertel dat er geen vast schema is (afh. van stijl)
+ - een rijmschema of geef aan als er geen vast schema is (afh. van stijl)
  - aantal strofen of regels
  - toon (afhankelijk van mood of stijl)
  - thema
@@ -122,7 +135,7 @@ Output in exact JSON formaat:
 Zorg dat de output strikt valide JSON is, zonder extra tekst.
 """
 
-    response = client.chat.completions.create(
+    completion = client.chat.completions.create(
         model="gpt-4o",
         messages=[
             {"role": "system", "content": system_prompt},
@@ -131,7 +144,7 @@ Zorg dat de output strikt valide JSON is, zonder extra tekst.
         temperature=0.7,
         max_tokens=1000
     )
-    structured_input = json.loads(response.choices[0].message.content)
+    structured_input = json.loads(completion.choices[0].message.content)
     return structured_input
 
 def _bepaal_aantal_strofen_op_basis_van_lengte(data):
@@ -140,13 +153,9 @@ def _bepaal_aantal_strofen_op_basis_van_lengte(data):
         return 4
     elif length == 'lang':
         return 12
-    # Default medium
     return 8
 
 def _generate_poem_prompt(structured_input, data):
-    """
-    Genereer een prompt voor het gedicht. We nemen instructies over stijl, lengte, toon, etc. mee.
-    """
     aantal_strofen = _bepaal_aantal_strofen_op_basis_van_lengte(data)
     style_instructies = beschrijf_stijl_op_basis_van_de_user_input(data)
     excluded_words = structured_input.get('excluded_words', '')
@@ -185,14 +194,10 @@ Zorg ervoor dat het duidelijk hoorbaar rijmt indien een rijmschema is opgegeven,
 
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
 def _generate_draft_poem(poem_prompt):
-    """
-    Genereer een eerste draft van het gedicht in het gespecificeerde JSON-format.
-    """
     client = get_openai_client()
     system_prompt = """Je bent een Nederlandse dichter die perfect kan voldoen aan bovenstaande instructies.
 Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
 """
-
     completion = client.beta.chat.completions.parse(
         model="gpt-4o",
         messages=[
@@ -208,9 +213,6 @@ Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
 
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
 def _check_and_fix_rhyme(poem_draft, structured_input, data):
-    """
-    Controleer het rijmschema en corrigeer indien nodig. Output blijft in zelfde JSON format.
-    """
     client = get_openai_client()
     check_prompt = f"""
 Dit is het gedicht dat je hebt gemaakt (in JSON):
@@ -223,7 +225,6 @@ Behoud dezelfde titel, thema en stijl. Hou rekening met uitgesloten woorden: {st
 
 Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra tekst.
 """
-
     completion = client.beta.chat.completions.parse(
         model="gpt-4o",
         messages=[
@@ -237,33 +238,54 @@ Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra te
     final_poem = completion.choices[0].message.parsed
     return final_poem
 
-
-class PoemCreateView(CreateView):
-    model = Poem
+class PoemCreateView(View):
     template_name = 'poems/create_poem.html'
-    success_url = reverse_lazy('poem_create')
 
-    @method_decorator(ratelimit(key='ip', rate='5/m', method=['POST']))
-    @method_decorator(csrf_protect)
+    def get(self, request, *args, **kwargs):
+        # Render de HTML pagina met het formulier
+        return render(request, self.template_name)
+
     def post(self, request, *args, **kwargs):
         try:
+            # Lees JSON data
+            body = request.body.decode('utf-8')
+            data = json.loads(body)
+
             ip_address = get_client_ip(request)
-            # Check rate limit
-            if Poem.check_rate_limit(ip_address):
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'Je hebt het maximale aantal gedichten (2) voor vandaag bereikt. Probeer het morgen opnieuw.'
-                }, status=429)
+            user = request.user if request.user.is_authenticated else None
 
-            data = request.POST.dict()
-            # Check op ongepaste content in de input
-            for veld in ['theme', 'mood', 'recipient', 'excluded_words']:
-                if contains_blocked_content(data.get(veld, '')):
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': 'Sorry, dit type inhoud is niet toegestaan.'
-                    }, status=400)
+            # Check gratis limiet
+            now = timezone.now()
+            if user and user.is_authenticated:
+                # Limiet per maand
+                poem_count = Poem.objects.filter(user=user, created_at__year=now.year, created_at__month=now.month).count()
+                if poem_count >= 2:
+                    # Check of er credits zijn
+                    if user.profile.credits < 1:
+                        return JsonResponse({'status': 'error', 'message': 'Je hebt je gratis maandlimiet bereikt. Koop credits om meer gedichten te genereren.'}, status=402)
+                    # Trek 1 credit af als straks opslaan slaagt.
+            else:
+                # Anoniem: limit per dag (24 uur)
+                past_24h = now - timedelta(days=1)
+                poems_count = Poem.objects.filter(ip_address=ip_address, created_at__gte=past_24h).count()
+                if poems_count >= 2:
+                    return JsonResponse({'status': 'error', 'message': 'Je hebt het maximale aantal gedichten (2) voor vandaag bereikt. Maak een account en koop credits om meer te genereren.'}, status=429)
 
+            # Genereer het gedicht
+            structured_input = _process_user_input(data)
+            poem_prompt = _generate_poem_prompt(structured_input, data)
+            poem_draft = _generate_draft_poem(poem_prompt)
+
+            combined_text = poem_draft.title + " " + " ".join(poem_draft.verses)
+            if contains_blocked_content(combined_text):
+                return JsonResponse({'status': 'error', 'message': 'Gegenereerde inhoud bevat ongepaste termen'}, status=400)
+
+            final_poem = _check_and_fix_rhyme(poem_draft, structured_input, data)
+            combined_text_final = final_poem.title + " " + " ".join(final_poem.verses)
+            if contains_blocked_content(combined_text_final):
+                return JsonResponse({'status': 'error', 'message': 'Gegenereerde inhoud bevat ongepaste termen'}, status=400)
+
+            # Gedicht opslaan in de database
             poem = Poem(
                 theme=data.get('theme', ''),
                 style=data.get('style', ''),
@@ -272,73 +294,160 @@ class PoemCreateView(CreateView):
                 length=data.get('length', ''),
                 recipient=data.get('recipient', ''),
                 excluded_words=data.get('excluded_words', ''),
-                ip_address=ip_address
+                generated_text=json.dumps(final_poem.dict(), ensure_ascii=False),
+                ip_address=ip_address,
+                created_at=now
             )
 
-            try:
-                poem_object = self._generate_poem_with_retry(data)
-                poem.generated_text = json.dumps(poem_object.dict(), ensure_ascii=False)
-                poem.full_clean()
-                poem.save()
-                return JsonResponse({
-                    'status': 'success',
-                    'poem': poem.generated_text
-                })
-            except ValidationError as e:
-                logger.error(f"Validatie fout: {e}")
-                return JsonResponse({
-                    'status': 'error',
-                    'message': str(e)
-                }, status=400)
-            except Exception as e:
-                logger.error(f"Fout bij genereren gedicht: {e}")
-                if 'rate limit' in str(e).lower():
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': 'Het systeem is momenteel erg druk. Probeer het over enkele minuten opnieuw.'
-                    }, status=429)
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'Er is een fout opgetreden bij het genereren van het gedicht.'
-                }, status=500)
+            if user and user.is_authenticated:
+                poem.user = user
+                # Trek 1 credit af als user al over limiet is
+                poem_count = Poem.objects.filter(user=user, created_at__year=now.year, created_at__month=now.month).count()
+                if poem_count >= 2:
+                    user.profile.credits -= 1
+                    user.profile.save()
+
+            poem.full_clean()
+            poem.save()
+
+            return JsonResponse({'status': 'success', 'poem': poem.generated_text})
+        except ValidationError as e:
+            logger.error(f"Validatie fout: {e}")
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
         except Exception as e:
-            logger.error(f"Request fout: {e}")
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Ongeldige gegevens ingevoerd.'
-            }, status=400)
-
-    def get(self, request, *args, **kwargs):
-        success, message = test_openai_connection()
-        if not success:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'API Configuratie Fout: {message}'
-            }, status=500)
-        return render(request, self.template_name)
-
-    @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
-    def _generate_poem_with_retry(self, data):
-        """
-        Gebruik de nieuwe hulpfuncties met Structured Outputs.
-        """
-        structured_input = _process_user_input(data)
-        poem_prompt = _generate_poem_prompt(structured_input, data)
-        poem_draft = _generate_draft_poem(poem_prompt)
-
-        # Check op ongepaste content in draft
-        combined_text = poem_draft.title + " " + " ".join(poem_draft.verses)
-        if contains_blocked_content(combined_text):
-            raise ValueError("Gegenereerde inhoud bevat ongepaste termen")
-
-        final_poem = _check_and_fix_rhyme(poem_draft, structured_input, data)
-        combined_text_final = final_poem.title + " " + " ".join(final_poem.verses)
-        if contains_blocked_content(combined_text_final):
-            raise ValueError("Gegenereerde inhoud bevat ongepaste termen")
-
-        return final_poem
+            logger.error(f"Fout bij genereren gedicht: {e}")
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
+
+class CreditPurchaseView(LoginRequiredMixin, View):
+    def get(self, request):
+        # Definieer credit pakketten
+        credit_packages = [
+            {'name': 'Starter', 'credits': 1, 'price_cents': 50},  # €0,50
+            {'name': 'Economie', 'credits': 15, 'price_cents': 500},  # €5.00
+        ]
+        return render(request, 'poems/purchase_credits.html', {
+            'credit_packages': credit_packages,
+            'stripe_public_key': settings.STRIPE_PUBLIC_KEY
+        })
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            print(f"Received purchase request for package: {data['package']}")
+            
+            package = next((p for p in [
+                {'name': 'Starter', 'credits': 1, 'price_cents': 50},
+                {'name': 'Economie', 'credits': 15, 'price_cents': 5000},
+            ] if p['name'] == data['package']), None)
+
+            if not package:
+                print(f"Invalid package requested: {data['package']}")
+                return JsonResponse({'error': 'Ongeldig pakket'}, status=400)
+
+            print(f"Creating payment intent for {package['credits']} credits, amount: {package['price_cents']}")
+            intent = stripe.PaymentIntent.create(
+                amount=package['price_cents'],
+                currency='eur',
+                metadata={'user_id': request.user.id, 'credits': package['credits']}
+            )
+
+            print(f"Payment intent created: {intent.id}")
+            return JsonResponse({'client_secret': intent.client_secret})
+        except Exception as e:
+            print(f"Error creating payment intent: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=400)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class StripeWebhookView(View):
+    def post(self, request):
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        event = None
+
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            )
+        except ValueError as e:
+            print(f"Error parsing webhook payload: {str(e)}")
+            return JsonResponse({'error': 'Invalid payload'}, status=400)
+        except stripe.error.SignatureVerificationError as e:
+            print(f"Invalid signature: {str(e)}")
+            return JsonResponse({'error': 'Invalid signature'}, status=400)
+
+        # Voeg extra logging toe
+        print(f"Received webhook event type: {event['type']}")
+        print(f"Event data: {event['data']}")
+
+        if event['type'] == 'payment_intent.succeeded':
+            try:
+                payment_intent = event['data']['object']
+                user_id = payment_intent['metadata']['user_id']
+                credits = int(payment_intent['metadata']['credits'])
+                
+                print(f"Processing payment for user {user_id}: {credits} credits")
+                
+                user = User.objects.get(id=user_id)
+                user.profile.credits += credits
+                user.profile.save()
+                
+                print(f"Credits added successfully. New balance: {user.profile.credits}")
+                
+            except Exception as e:
+                print(f"Error processing payment: {str(e)}")
+                return JsonResponse({'error': str(e)}, status=400)
+
+        return JsonResponse({'status': 'success'})
+
+class CustomLoginView(View):
+    def get(self, request):
+        # Toon het loginformulier
+        form = AuthenticationForm()
+        return render(request, 'registration/login.html', {'form': form})
+
+    def post(self, request):
+        # Verwerk het loginformulier
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('poem_create')
+        # Als inloggen mislukt, toon opnieuw het formulier met foutmeldingen
+        return render(request, 'registration/login.html', {'form': form})
+    
+
+class SignupView(View):
+    def get(self, request):
+        form = SignupForm()
+        return render(request, 'registration/signup.html', {'form': form})
+    
+    def post(self, request):
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Log de gebruiker direct in na registratie
+            login(request, user)
+            # Redirect naar homepage in plaats van login pagina
+            return redirect('poem_create')
+        return render(request, 'registration/signup.html', {'form': form})
+
+class DashboardView(LoginRequiredMixin, View):
+    def get(self, request):
+        user = request.user
+        # Haal de gedichten van de ingelogde gebruiker op
+        poems = Poem.objects.filter(user=user)
+        return render(request, 'dashboard.html', {
+            'poems': poems,
+            'credits': user.profile.credits
+        })
+        
+        
 class SinterklaasPoemCreateView(CreateView):
     model = Poem
     form_class = SinterklaasPoemForm
@@ -362,7 +471,6 @@ class SinterklaasPoemCreateView(CreateView):
             poem.theme = 'SINTERKLAAS'
 
             try:
-                # Hier laten we de code voor Sinterklaas-gedicht ongewijzigd
                 poem.generated_text = self._generate_poem_with_retry(cleaned_data)
                 poem.full_clean()
                 poem.save()
@@ -395,9 +503,6 @@ class SinterklaasPoemCreateView(CreateView):
 
     @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
     def _generate_poem_with_retry(self, data):
-        """
-        Hier blijft de code voor SinterklaasPoemCreateView ongewijzigd.
-        """
         system_prompt = """Je bent een ervaren Sinterklaas dichter die prachtige Nederlandse gedichten schrijft.
 Je schrijft alleen familie-vriendelijke, gepaste gedichten.
 Vermijd onder alle omstandigheden ongepaste, seksuele of expliciete inhoud.

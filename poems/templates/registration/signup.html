@@ -1,0 +1,187 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registreren - GedichtGPT</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .gradient-background {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .form-container {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        /* Custom form styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background-color: white;
+        }
+        .asteriskField {
+            display: none;
+        }
+        .help-text {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+        /* Password requirements styling */
+        .password-requirements {
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        .password-requirements ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .password-requirements li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        .password-requirements li::before {
+            content: "•";
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body class="gradient-background min-h-screen flex items-center justify-center p-4">
+    <div class="form-container p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
+        <!-- Logo/Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-600 mb-2">GedichtGPT</h1>
+            <p class="text-gray-600">Maak een account aan om te beginnen</p>
+            <a href="{% url 'poem_create' %}" 
+               class="inline-block mt-4 text-sm text-gray-500 hover:text-indigo-600 transition-colors">
+               ← Terug naar Home
+            </a>
+        </div>
+
+        <!-- Signup Form -->
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <div class="space-y-6">
+                <!-- Username field -->
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Gebruikersnaam</label>
+                    {{ form.username }}
+                    {% if form.username.help_text %}
+                    <div class="help-text">{{ form.username.help_text }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Email field -->
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">E-mailadres</label>
+                    {{ form.email }}
+                    {% if form.email.help_text %}
+                    <div class="help-text">{{ form.email.help_text }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Password field -->
+                <div class="form-group">
+                    <label for="{{ form.password1.id_for_label }}">Wachtwoord</label>
+                    {{ form.password1 }}
+                    <div class="password-requirements">
+                        <ul>
+                            <li>Minimaal 8 karakters lang</li>
+                            <li>Mag niet te veel lijken op je gebruikersnaam</li>
+                            <li>Mag geen veelgebruikt wachtwoord zijn</li>
+                            <li>Moet letters en cijfers bevatten</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Password confirmation field -->
+                <div class="form-group">
+                    <label for="{{ form.password2.id_for_label }}">Bevestig wachtwoord</label>
+                    {{ form.password2 }}
+                </div>
+            </div>
+            
+            <!-- Signup Button -->
+            <button type="submit" 
+                    class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 
+                           transition duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 
+                           focus:ring-indigo-500 focus:ring-offset-2">
+                Account Aanmaken
+            </button>
+
+            <!-- Additional Links -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-600">
+                    Al een account? 
+                    <a href="{% url 'login' %}" 
+                       class="text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
+                        Log hier in
+                    </a>
+                </p>
+            </div>
+        </form>
+
+        <!-- Benefits Section -->
+        <div class="mt-8 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-medium text-gray-700 mb-4 text-center">Voordelen van een account</h3>
+            <div class="space-y-3">
+                <div class="flex items-center p-3 rounded-lg bg-gray-50">
+                    <span class="text-indigo-600 mr-3">✨</span>
+                    <p class="text-gray-600 text-sm">Onbeperkt gedichten genereren</p>
+                </div>
+                <div class="flex items-center p-3 rounded-lg bg-gray-50">
+                    <span class="text-indigo-600 mr-3">💾</span>
+                    <p class="text-gray-600 text-sm">Bewaar al je gedichten</p>
+                </div>
+                <div class="flex items-center p-3 rounded-lg bg-gray-50">
+                    <span class="text-indigo-600 mr-3">🎯</span>
+                    <p class="text-gray-600 text-sm">Persoonlijke voorkeuren opslaan</p>
+                </div>
+                <div class="flex items-center p-3 rounded-lg bg-gray-50">
+                    <span class="text-indigo-600 mr-3">🔄</span>
+                    <p class="text-gray-600 text-sm">Gratis updates en nieuwe features</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Notice -->
+        <div class="mt-6 text-center">
+            <p class="text-xs text-gray-500">
+                Door een account aan te maken ga je akkoord met onze 
+                <a href="#" class="text-indigo-600 hover:underline">voorwaarden</a> en 
+                <a href="#" class="text-indigo-600 hover:underline">privacybeleid</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
