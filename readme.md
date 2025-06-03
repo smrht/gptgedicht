@@ -1,6 +1,6 @@
 # GedichtGPT
 
-Een moderne web applicatie voor het genereren van Nederlandse gedichten met behulp van AI.
+Een moderne webapplicatie voor het genereren van Nederlandse gedichten met behulp van AI.
 
 ## Functionaliteiten
 
@@ -26,28 +26,36 @@ source venv/bin/activate  # Voor Unix/macOS
 pip install -r requirements.txt
 ```
 
-4. Maak een .env bestand aan op basis van .env.example:
+4. Maak een .env bestand aan op basis van `.env.example`:
 ```bash
 cp .env.example .env
 ```
 
-5. Voeg je OpenAI API key en FAL_API_KEY toe aan het .env bestand
+5. Vul het `.env`-bestand met jouw gegevens. De beschikbare variabelen zijn:
+   - `SECRET_KEY`
+   - `DEBUG`
+   - `ALLOWED_HOSTS`
+   - `OPENAI_API_KEY`
+   - `FAL_API_KEY`
+   - `STRIPE_PUBLIC_KEY`
+   - `STRIPE_SECRET_KEY`
+   - `STRIPE_WEBHOOK_SECRET`
 
 ## Gebruik
 
 1. Start de applicatie:
 ```bash
-python app.py
+python manage.py runserver
 ```
 
-2. Open je browser en ga naar `http://localhost:5000`
+2. Open je browser en ga naar `http://localhost:8000`
 
 3. Vul de gewenste velden in en klik op "Genereer Gedicht"
 
 ## Technische Details
 
-- Backend: Python Flask
+- Backend: Python Django
 - Frontend: HTML, TailwindCSS, JavaScript
 - AI: OpenAI GPT-3.5
-- Rate Limiting: Flask-Limiter
+- Rate Limiting: django-ratelimit
 - Caching: Redis (optioneel)
