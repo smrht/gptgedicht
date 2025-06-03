@@ -165,6 +165,7 @@
                 <div id="retry-info" class="mt-2 text-sm text-red-500 hidden">
                     Het systeem probeert het automatisch opnieuw... Even geduld.
                 </div>
+                <div id="error-link" class="mt-2 text-sm hidden"></div>
             </div>
         </section>
 
@@ -316,6 +317,7 @@
             const errorDiv = document.getElementById('error');
             const errorMessage = document.getElementById('error-message');
             const retryInfo = document.getElementById('retry-info');
+            const errorLink = document.getElementById('error-link');
             const poemDiv = document.getElementById('poem');
             const imageContainer = document.getElementById('image-container');
             const submitButton = document.querySelector('button[type="submit"]');
@@ -324,6 +326,8 @@
             result.classList.add('hidden');
             errorDiv.classList.add('hidden');
             retryInfo.classList.add('hidden');
+            errorLink.classList.add('hidden');
+            errorLink.innerHTML = '';
             imageContainer.innerHTML = '';
             loading.classList.add('active');
             submitButton.disabled = true;
@@ -366,7 +370,10 @@
                 } else {
                     errorMessage.textContent = responseData.message || 'Er is een fout opgetreden.';
                     errorDiv.classList.remove('hidden');
-                    if (response.status === 429 || response.status === 402) {
+                    if (responseData.redirect_url) {
+                        errorLink.innerHTML = `<a href="${responseData.redirect_url}" class="text-indigo-600 underline">Klik hier om verder te gaan</a>`;
+                        errorLink.classList.remove('hidden');
+                    } else if (response.status === 429 || response.status === 402) {
                         retryInfo.classList.remove('hidden');
                     }
                 }

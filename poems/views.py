@@ -3,7 +3,7 @@ import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, View
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
@@ -272,14 +272,22 @@ class PoemCreateView(View):
                 if poem_count >= 2:
                     # Check of er credits zijn
                     if user.profile.credits < 1:
-                        return JsonResponse({'status': 'error', 'message': 'Je hebt je gratis maandlimiet bereikt. Koop credits om meer gedichten te genereren.'}, status=402)
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Je hebt je gratis maandlimiet bereikt. Koop credits om meer gedichten te genereren.',
+                            'redirect_url': reverse('purchase_credits')
+                        }, status=402)
                     # Trek 1 credit af als straks opslaan slaagt.
             else:
                 # Anoniem: limit per dag (24 uur)
                 past_24h = now - timedelta(days=1)
                 poems_count = Poem.objects.filter(ip_address=ip_address, created_at__gte=past_24h).count()
                 if poems_count >= 2:
-                    return JsonResponse({'status': 'error', 'message': 'Je hebt het maximale aantal gedichten (2) voor vandaag bereikt. Maak een account en koop credits om meer te genereren.'}, status=429)
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Je hebt het maximale aantal gedichten (2) voor vandaag bereikt. Maak een account en koop credits om meer te genereren.',
+                        'redirect_url': reverse('signup')
+                    }, status=429)
 
             # Genereer het gedicht
             structured_input = _process_user_input(data)
