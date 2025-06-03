@@ -1,5 +1,5 @@
 """
-WSGI config for seo_monitor project.
+WSGI config for poemgenerator project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
