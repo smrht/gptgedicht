@@ -152,6 +152,7 @@
             <div id="result" class="mt-8 hidden">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-700">Jouw Gedicht:</h2>
                 <div id="poem" class="whitespace-pre-wrap p-6 bg-gray-50 rounded border"></div>
+                <div id="image-container" class="mt-4"></div>
             </div>
 
             <div id="error" class="mt-4 hidden p-4 bg-red-100 rounded">
@@ -316,12 +317,14 @@
             const errorMessage = document.getElementById('error-message');
             const retryInfo = document.getElementById('retry-info');
             const poemDiv = document.getElementById('poem');
+            const imageContainer = document.getElementById('image-container');
             const submitButton = document.querySelector('button[type="submit"]');
 
             // Reset previous results
             result.classList.add('hidden');
             errorDiv.classList.add('hidden');
             retryInfo.classList.add('hidden');
+            imageContainer.innerHTML = '';
             loading.classList.add('active');
             submitButton.disabled = true;
 
@@ -353,6 +356,10 @@
                         });
                     } catch (err) {
                         poemDiv.textContent = responseData.poem;
+                    }
+
+                    if (responseData.image_url) {
+                        imageContainer.innerHTML = `<img src="${responseData.image_url}" class="max-w-full mx-auto">`;
                     }
 
                     result.classList.remove('hidden');
