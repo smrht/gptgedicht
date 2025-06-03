@@ -40,8 +40,6 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
     '.ngrok-free.app',
 ])
 
-# Debug: print ALLOWED_HOSTS to verify
-print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 CSRF_TRUSTED_ORIGINS = [
     'https://gedichtgpt.nl',
