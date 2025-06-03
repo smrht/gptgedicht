@@ -53,11 +53,21 @@ def generate_image_with_fal(prompt: str, model: str = "fal-ai/flux-1/schnell") -
     if not api_key:
         raise ValueError("FAL_API_KEY niet gevonden in settings.")
 
-    url = "https://fal.ai/api/v1/predictions"
-    headers = {"Authorization": f"Key {api_key}"}
-    payload = {"model": model, "prompt": prompt}
+    url = f"https://fal.ai/api/v1/predict/{model}"
+    headers = {
+        "Authorization": f"Key {api_key}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    payload = {"prompt": prompt}
 
     response = requests.post(url, json=payload, headers=headers, timeout=60)
     response.raise_for_status()
     data = response.json()
-    return data.get("image_url", "")
+
+    image_url = data.get("image_url")
+    if not image_url:
+        images = data.get("images")
+        if isinstance(images, list) and images:
+            image_url = images[0]
+    return image_url or ""
