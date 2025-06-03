@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from pydantic import BaseModel
 from .models import Poem, Profile
 from .forms import PoemForm, SinterklaasPoemForm
-from .utils import contains_blocked_content, retry_with_exponential_backoff
+from .utils import contains_blocked_content, retry_with_exponential_backoff, generate_image_with_fal
 from openai import OpenAI
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -295,6 +295,14 @@ class PoemCreateView(View):
             if contains_blocked_content(combined_text_final):
                 return JsonResponse({'status': 'error', 'message': 'Gegenereerde inhoud bevat ongepaste termen'}, status=400)
 
+            # Genereer een afbeelding met fal.ai op basis van het gedicht
+            try:
+                image_prompt = f"{final_poem.title}. {data.get('theme', '')}"
+                image_url = generate_image_with_fal(image_prompt)
+            except Exception as img_err:
+                logger.error(f"Fout bij genereren afbeelding: {img_err}")
+                image_url = ""
+
             # Gedicht opslaan in de database
             poem = Poem(
                 theme=data.get('theme', ''),
@@ -305,6 +313,7 @@ class PoemCreateView(View):
                 recipient=data.get('recipient', ''),
                 excluded_words=data.get('excluded_words', ''),
                 generated_text=json.dumps(final_poem.dict(), ensure_ascii=False),
+                image_url=image_url,
                 ip_address=ip_address,
                 created_at=now
             )
@@ -320,7 +329,7 @@ class PoemCreateView(View):
             poem.full_clean()
             poem.save()
 
-            return JsonResponse({'status': 'success', 'poem': poem.generated_text})
+            return JsonResponse({'status': 'success', 'poem': poem.generated_text, 'image_url': image_url})
         except ValidationError as e:
             logger.error(f"Validatie fout: {e}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

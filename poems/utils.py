@@ -42,3 +42,22 @@ def retry_with_exponential_backoff(max_retries=3, initial_wait=5):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def generate_image_with_fal(prompt: str, model: str = "fal-ai/flux-1/schnell") -> str:
+    """Genereer een afbeelding via de fal.ai API en retourneer de URL."""
+    import requests
+    from django.conf import settings
+
+    api_key = getattr(settings, "FAL_API_KEY", None)
+    if not api_key:
+        raise ValueError("FAL_API_KEY niet gevonden in settings.")
+
+    url = "https://fal.ai/api/v1/predictions"
+    headers = {"Authorization": f"Key {api_key}"}
+    payload = {"model": model, "prompt": prompt}
+
+    response = requests.post(url, json=payload, headers=headers, timeout=60)
+    response.raise_for_status()
+    data = response.json()
+    return data.get("image_url", "")

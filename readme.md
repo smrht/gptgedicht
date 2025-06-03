@@ -31,7 +31,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-5. Voeg je OpenAI API key toe aan het .env bestand
+5. Voeg je OpenAI API key en FAL_API_KEY toe aan het .env bestand
 
 ## Gebruik
 

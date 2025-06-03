@@ -169,6 +169,8 @@ load_dotenv()
 
 # Lees de OpenAI API-key uit de omgeving
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+# Fal.ai API key voor het genereren van afbeeldingen
+FAL_API_KEY = os.getenv('FAL_API_KEY')
 
 
 LOGGING = {  
