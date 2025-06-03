@@ -19,6 +19,8 @@ Een moderne webapplicatie voor het genereren van Nederlandse gedichten met behul
 ```bash
 python -m venv venv
 source venv/bin/activate  # Voor Unix/macOS
+# Windows
+venv\Scripts\activate
 ```
 
 3. Installeer de benodigde packages:
@@ -40,6 +42,11 @@ cp .env.example .env
    - `STRIPE_PUBLIC_KEY`
    - `STRIPE_SECRET_KEY`
    - `STRIPE_WEBHOOK_SECRET`
+
+6. Voer de database migraties uit:
+```bash
+python manage.py migrate
+```
 
 ## Gebruik
 
