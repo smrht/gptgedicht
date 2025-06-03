@@ -20,34 +20,32 @@ Een moderne web applicatie voor het genereren van Nederlandse gedichten met behu
 python -m venv venv
 source venv/bin/activate  # Voor Unix/macOS
 ```
-
 3. Installeer de benodigde packages:
 ```bash
 pip install -r requirements.txt
 ```
-
-4. Maak een .env bestand aan op basis van .env.example:
+4. Maak een .env bestand aan op basis van `.env.example` en vul de benodigde sleutels in:
 ```bash
 cp .env.example .env
 ```
 
-5. Voeg je OpenAI API key en FAL_API_KEY toe aan het .env bestand
-
 ## Gebruik
 
-1. Start de applicatie:
+1. Voer de database migraties uit:
 ```bash
-python app.py
+python manage.py migrate
 ```
-
-2. Open je browser en ga naar `http://localhost:5000`
-
-3. Vul de gewenste velden in en klik op "Genereer Gedicht"
+2. Start de applicatie lokaal:
+```bash
+python manage.py runserver
+```
+3. Open je browser en ga naar `http://localhost:8000`
+4. Vul de gewenste velden in en klik op "Genereer Gedicht"
 
 ## Technische Details
 
-- Backend: Python Flask
+- Backend: Python Django
 - Frontend: HTML, TailwindCSS, JavaScript
 - AI: OpenAI GPT-3.5
-- Rate Limiting: Flask-Limiter
+- Rate Limiting: django-ratelimit
 - Caching: Redis (optioneel)
