@@ -195,20 +195,25 @@ Zorg ervoor dat het duidelijk hoorbaar rijmt indien een rijmschema is opgegeven,
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
 def _generate_draft_poem(poem_prompt):
     client = get_openai_client()
-    system_prompt = """Je bent een Nederlandse dichter die perfect kan voldoen aan bovenstaande instructies.
-Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
-"""
-    completion = client.beta.chat.completions.parse(
+    system_prompt = (
+        "Je bent een Nederlandse dichter die perfect kan voldoen aan "
+        "bovenstaande instructies."
+        "\nJe geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd."
+    )
+
+    completion = client.chat.completions.create(
         model="gpt-4o",
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": poem_prompt}
+            {"role": "user", "content": poem_prompt},
         ],
         temperature=0.7,
         max_tokens=1500,
-        response_format=PoemSchema
+        response_format={"type": "json_object"},
     )
-    poem_draft = completion.choices[0].message.parsed
+
+    poem_json = completion.choices[0].message.content
+    poem_draft = PoemSchema.model_validate_json(poem_json)
     return poem_draft
 
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
@@ -225,17 +230,22 @@ Behoud dezelfde titel, thema en stijl. Hou rekening met uitgesloten woorden: {st
 
 Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra tekst.
 """
-    completion = client.beta.chat.completions.parse(
+    completion = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content":"Je bent een strenge redacteur die erop let dat elk gedicht perfect voldoet aan het schema en instructies."},
-            {"role": "user", "content": check_prompt}
+            {
+                "role": "system",
+                "content": "Je bent een strenge redacteur die erop let dat elk gedicht perfect voldoet aan het schema en instructies.",
+            },
+            {"role": "user", "content": check_prompt},
         ],
         temperature=0.5,
         max_tokens=1500,
-        response_format=PoemSchema
+        response_format={"type": "json_object"},
     )
-    final_poem = completion.choices[0].message.parsed
+
+    poem_json = completion.choices[0].message.content
+    final_poem = PoemSchema.model_validate_json(poem_json)
     return final_poem
 
 class PoemCreateView(View):
