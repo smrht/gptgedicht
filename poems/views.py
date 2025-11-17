@@ -44,13 +44,27 @@ def get_client_ip(request):
     return request.META.get('REMOTE_ADDR')
 
 def get_openai_client():
-    """
-    Maak een OpenAI client aan.
-    """
-    api_key = getattr(settings, 'OPENAI_API_KEY', None)
+    """Stel de OpenAI client in voor gebruik via OpenRouter."""
+    api_key = getattr(settings, 'OPENROUTER_API_KEY', None) or getattr(settings, 'OPENAI_API_KEY', None)
     if not api_key:
-        raise ValueError("OPENAI_API_KEY niet gevonden in settings.")
-    client = OpenAI(api_key=api_key)
+        raise ValueError("Geen OpenRouter of OpenAI API-key gevonden in settings.")
+
+    base_url = getattr(settings, 'OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
+    default_headers = {}
+
+    http_referer = getattr(settings, 'OPENROUTER_HTTP_REFERER', None)
+    if http_referer:
+        default_headers['HTTP-Referer'] = http_referer
+
+    title = getattr(settings, 'OPENROUTER_TITLE', None)
+    if title:
+        default_headers['X-Title'] = title
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url=base_url,
+        default_headers=default_headers or None,
+    )
     return client
 
 def test_openai_connection():
@@ -58,7 +72,7 @@ def test_openai_connection():
     try:
         client = get_openai_client()
         completion = client.chat.completions.create(
-            model="gpt-4o",
+            model="google/gemini-2.5-flash",
             messages=[{"role": "user", "content": "Say 'API connection successful'"}],
             max_tokens=10
         )
@@ -115,28 +129,30 @@ def _process_user_input(data):
     Uit te sluiten woorden: {data.get('excluded_words', '')}
     """
 
-    system_prompt = """Je bent een planner die op basis van gebruikersinvoer een duidelijke instructie maakt om een perfect gedicht te schrijven.
-Specificeer minimaal:
- - een rijmschema of geef aan als er geen vast schema is (afh. van stijl)
- - aantal strofen of regels
- - toon (afhankelijk van mood of stijl)
- - thema
- - eventueel extra instructies
-
-Output in exact JSON formaat:
+    system_prompt = """Je bent een strenge planner voor rijmende Nederlandstalige gedichten.
+Maak voor elke aanvraag een concreet plan en lever ALLEEN het volgende JSON-object terug:
 {
  "rijmschema": "aabb",
  "aantal_strofen": 4,
  "toon": "speels",
  "thema": "...",
  "excluded_words": "...",
+ "eindklanken_per_strofe": [
+   ["al", "al"],
+   ["oot", "oot"],
+   ...
+ ],
  "extra_instructies": "..."
 }
-Zorg dat de output strikt valide JSON is, zonder extra tekst.
+Regels:
+1. "eindklanken_per_strofe" is een lijst met lijsten; elke binnenste lijst bevat de exacte klank (of eindwoord) waarop de regels van de strofe moeten eindigen, in volgorde volgens het rijmschema.
+2. Als er geen uitgesloten woorden zijn, zet "excluded_words" op een lege string.
+3. Toon, thema en extra instructies moeten de gegeven mood/style/seizoen verwerken.
+4. Output MOET harde JSON zijn zonder extra tekst.
 """
 
     completion = client.chat.completions.create(
-        model="gpt-4o",
+        model="google/gemini-2.5-flash",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input}
@@ -195,25 +211,20 @@ Zorg ervoor dat het duidelijk hoorbaar rijmt indien een rijmschema is opgegeven,
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
 def _generate_draft_poem(poem_prompt):
     client = get_openai_client()
-    system_prompt = (
-        "Je bent een Nederlandse dichter die perfect kan voldoen aan "
-        "bovenstaande instructies."
-        "\nJe geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd."
-    )
-
-    completion = client.chat.completions.create(
-        model="gpt-4o",
+    system_prompt = """Je bent een Nederlandse dichter die perfect kan voldoen aan bovenstaande instructies.
+Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
+"""
+    completion = client.beta.chat.completions.parse(
+        model="google/gemini-2.5-flash",
         messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": poem_prompt},
+            {"role": "system", "content": system_prompt + "\n\nEis: gebruik exact de eindklanken per strofe zoals aangeleverd. Elke regel moet eindigen op die klank of een woord dat duidelijk rijmt."},
+            {"role": "user", "content": poem_prompt}
         ],
-        temperature=0.7,
+        temperature=0.6,
         max_tokens=1500,
-        response_format={"type": "json_object"},
+        response_format=PoemSchema
     )
-
-    poem_json = completion.choices[0].message.content
-    poem_draft = PoemSchema.model_validate_json(poem_json)
+    poem_draft = completion.choices[0].message.parsed
     return poem_draft
 
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
@@ -238,8 +249,16 @@ Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra te
                 "content": "Je bent een strenge redacteur die erop let dat elk gedicht perfect voldoet aan het schema en instructies.",
             },
             {"role": "user", "content": check_prompt},
+    completion = client.beta.chat.completions.parse(
+        model="x-ai/grok-4-fast",
+        messages=[
+            {
+                "role": "system",
+                "content": "Je bent een Nederlandse eindredacteur. Controleer per strofe of de laatste woorden rijmen volgens het opgegeven schema en de opgegeven eindklanken. Herschrijf alleen regels die falen, en zorg dat nieuwe regels WEL rijmen."
+            },
+            {"role": "user", "content": check_prompt}
         ],
-        temperature=0.5,
+        temperature=0.4,
         max_tokens=1500,
         response_format={"type": "json_object"},
     )
@@ -552,7 +571,7 @@ Voeg humor en persoonlijke details toe waar mogelijk."""
 
         client = get_openai_client()
         completion = client.chat.completions.create(
-            model="gpt-4o",
+            model="x-ai/grok-4-fast",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
@@ -601,3 +620,31 @@ class CheckoutCompleteView(LoginRequiredMixin, View):
                 'success': False,
                 'error': 'Er is een fout opgetreden bij het verwerken van de betaling'
             })
+            
+def checkout_complete(request):
+    # Lees de query parameters uit
+    payment_intent_id = request.GET.get('payment_intent', None)
+
+    if not payment_intent_id:
+        # Geen payment_intent in de URL => redirect naar home of error pagina
+        return redirect('poem_create')  # pas aan naar wens
+
+    # Haal de PaymentIntent op via de Stripe API
+    try:
+        pi = stripe.PaymentIntent.retrieve(payment_intent_id)
+    except Exception as e:
+        # Kon PaymentIntent niet ophalen => foutafhandeling
+        return redirect('poem_create')  # of toon een foutpagina
+
+    # Controleer de status
+    if pi.status == 'succeeded':
+        # Betaling geslaagd, redirect naar schone success pagina
+        return redirect('checkout_success')
+    else:
+        # Betaling niet geslaagd, laat dit zien of redirect naar error pagina
+        # Je kunt bijvoorbeeld een melding tonen dat de betaling niet is afgerond
+        return redirect('checkout_error')
+    
+def checkout_success(request):
+    # Toon een nette pagina "Bedankt voor je aankoop!"
+    return render(request, 'checkout/success.html')
