@@ -160,15 +160,21 @@ RATELIMIT_USE_CACHE = 'default'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# OpenAI settings
+# OpenRouter / OpenAI settings
 from dotenv import load_dotenv
 import os
 
 # Laad het .env-bestand
 load_dotenv()
 
-# Lees de OpenAI API-key uit de omgeving
+# Legacy OpenAI key blijft beschikbaar als fallback
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+# OpenRouter configuratie (fallback naar OPENAI_API_KEY zodat bestaande .env blijft werken)
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', OPENAI_API_KEY)
+OPENROUTER_BASE_URL = os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
+OPENROUTER_HTTP_REFERER = os.getenv('OPENROUTER_HTTP_REFERER')
+OPENROUTER_TITLE = os.getenv('OPENROUTER_TITLE')
 
 
 LOGGING = {  

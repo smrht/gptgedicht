@@ -70,6 +70,7 @@ class Poem(models.Model):
     recipient = models.CharField(max_length=200, blank=True, help_text="Voor wie is het gedicht bedoeld?")
     excluded_words = models.TextField(blank=True, help_text="Woorden die niet in het gedicht mogen voorkomen")
     generated_text = models.TextField()
+    image_url = models.URLField(blank=True, null=True, help_text="Optionele illustratie bij het gedicht")
     created_at = models.DateTimeField(default=timezone.now)
     ip_address = models.GenericIPAddressField(help_text="IP adres van de gebruiker", default='127.0.0.1')
 
