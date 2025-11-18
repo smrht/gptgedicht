@@ -72,7 +72,7 @@ def test_openai_connection():
     try:
         client = get_openai_client()
         completion = client.chat.completions.create(
-            model="x-ai/grok-4-fast",
+            model="openai/gpt-5",
             messages=[{"role": "user", "content": "Say 'API connection successful'"}],
             max_tokens=10
         )
@@ -152,7 +152,7 @@ Regels:
 """
 
     completion = client.chat.completions.create(
-        model="x-ai/grok-4-fast",
+        model="openai/gpt-5",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input}
@@ -215,7 +215,7 @@ def _generate_draft_poem(poem_prompt):
 Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
 """
     completion = client.beta.chat.completions.parse(
-        model="x-ai/grok-4-fast",
+        model="openai/gpt-5",
         messages=[
             {"role": "system", "content": system_prompt + "\n\nEis: gebruik exact de eindklanken per strofe zoals aangeleverd. Elke regel moet eindigen op die klank of een woord dat duidelijk rijmt."},
             {"role": "user", "content": poem_prompt}
@@ -563,7 +563,7 @@ Voeg humor en persoonlijke details toe waar mogelijk."""
 
         client = get_openai_client()
         completion = client.chat.completions.create(
-            model="x-ai/grok-4-fast",
+            model="openai/gpt-5",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
