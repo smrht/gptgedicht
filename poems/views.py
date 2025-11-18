@@ -241,16 +241,8 @@ Behoud dezelfde titel, thema en stijl. Hou rekening met uitgesloten woorden: {st
 
 Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra tekst.
 """
-    completion = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "system",
-                "content": "Je bent een strenge redacteur die erop let dat elk gedicht perfect voldoet aan het schema en instructies.",
-            },
-            {"role": "user", "content": check_prompt},
     completion = client.beta.chat.completions.parse(
-        model="x-ai/grok-4-fast",
+        model="google/gemini-2.5-flash",
         messages=[
             {
                 "role": "system",
@@ -260,7 +252,7 @@ Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra te
         ],
         temperature=0.4,
         max_tokens=1500,
-        response_format={"type": "json_object"},
+        response_format=PoemSchema
     )
 
     poem_json = completion.choices[0].message.content
