@@ -55,6 +55,28 @@ def _safe_json_loads(text: str):
                 return json.loads(m.group(0))
             raise
 
+def _get_choice_content(choice) -> str:
+    try:
+        msg = getattr(choice, 'message', None)
+        if msg is not None:
+            c = getattr(msg, 'content', None)
+            if c:
+                return c
+    except Exception:
+        pass
+    try:
+        t = getattr(choice, 'text', None)
+        if t:
+            return t
+    except Exception:
+        pass
+    return ""
+
+def _model_supports_json_mode(model: str) -> bool:
+    if not model:
+        return False
+    return not model.startswith("google/")
+
 def get_client_ip(request):
     """Haal het IP-adres van de gebruiker op."""
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -174,19 +196,58 @@ Regels:
 """
 
     model = getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini')
-    completion = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input}
-        ],
-        temperature=0.7,
-        max_tokens=300,
-        response_format={"type": "json_object"},
-        timeout=25,
-    )
-    content = completion.choices[0].message.content or ""
-    structured_input = _safe_json_loads(content)
+    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'openai/gpt-4o-mini')
+    use_json_mode = _model_supports_json_mode(model)
+    try:
+        kwargs = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 300,
+            "timeout": 25,
+        }
+        if use_json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        completion = client.chat.completions.create(**kwargs)
+        content = _get_choice_content(completion.choices[0]) or ""
+        structured_input = _safe_json_loads(content)
+    except Exception as e:
+        logger.warning(f"Planner JSON-mode faalde ({type(e).__name__}): {e}. Probeer zonder response_format.")
+        try:
+            kwargs = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_input}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 300,
+                "timeout": 25,
+            }
+            completion = client.chat.completions.create(**kwargs)
+            content = _get_choice_content(completion.choices[0]) or ""
+            structured_input = _safe_json_loads(content)
+        except Exception as e2:
+            logger.warning(f"Planner zonder JSON-mode faalde ({type(e2).__name__}): {e2}. Fallback model wordt geprobeerd.")
+            kwargs = {
+                "model": fallback_model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_input}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 300,
+                "timeout": 25,
+                "response_format": {"type": "json_object"} if _model_supports_json_mode(fallback_model) else None,
+            }
+            if kwargs["response_format"] is None:
+                del kwargs["response_format"]
+            completion = client.chat.completions.create(**kwargs)
+            content = _get_choice_content(completion.choices[0]) or ""
+            structured_input = _safe_json_loads(content)
     return structured_input
 
 def _bepaal_aantal_strofen_op_basis_van_lengte(data):
@@ -241,19 +302,58 @@ def _generate_draft_poem(poem_prompt):
 Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
 """
     model = getattr(settings, 'GENERATOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini'))
-    completion = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt + "\n\nEis: gebruik exact de eindklanken per strofe zoals aangeleverd. Elke regel moet eindigen op die klank of een woord dat duidelijk rijmt."},
-            {"role": "user", "content": poem_prompt}
-        ],
-        temperature=0.6,
-        max_tokens=1200,
-        response_format={"type": "json_object"},
-        timeout=40,
-    )
-    content = completion.choices[0].message.content or ""
-    data = _safe_json_loads(content)
+    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'openai/gpt-4o-mini')
+    use_json_mode = _model_supports_json_mode(model)
+    try:
+        kwargs = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt + "\n\nEis: gebruik exact de eindklanken per strofe zoals aangeleverd. Elke regel moet eindigen op die klank of een woord dat duidelijk rijmt."},
+                {"role": "user", "content": poem_prompt}
+            ],
+            "temperature": 0.6,
+            "max_tokens": 1200,
+            "timeout": 40,
+        }
+        if use_json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        completion = client.chat.completions.create(**kwargs)
+        content = _get_choice_content(completion.choices[0]) or ""
+        data = _safe_json_loads(content)
+    except Exception as e:
+        logger.warning(f"Generator JSON-mode faalde ({type(e).__name__}): {e}. Probeer zonder response_format.")
+        try:
+            kwargs = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt + "\n\nEis: gebruik exact de eindklanken per strofe zoals aangeleverd. Elke regel moet eindigen op die klank of een woord dat duidelijk rijmt."},
+                    {"role": "user", "content": poem_prompt}
+                ],
+                "temperature": 0.6,
+                "max_tokens": 1200,
+                "timeout": 40,
+            }
+            completion = client.chat.completions.create(**kwargs)
+            content = _get_choice_content(completion.choices[0]) or ""
+            data = _safe_json_loads(content)
+        except Exception as e2:
+            logger.warning(f"Generator zonder JSON-mode faalde ({type(e2).__name__}): {e2}. Fallback model wordt geprobeerd.")
+            kwargs = {
+                "model": fallback_model,
+                "messages": [
+                    {"role": "system", "content": system_prompt + "\n\nEis: gebruik exact de eindklanken per strofe zoals aangeleverd. Elke regel moet eindigen op die klank of een woord dat duidelijk rijmt."},
+                    {"role": "user", "content": poem_prompt}
+                ],
+                "temperature": 0.6,
+                "max_tokens": 1200,
+                "timeout": 40,
+                "response_format": {"type": "json_object"} if _model_supports_json_mode(fallback_model) else None,
+            }
+            if kwargs["response_format"] is None:
+                del kwargs["response_format"]
+            completion = client.chat.completions.create(**kwargs)
+            content = _get_choice_content(completion.choices[0]) or ""
+            data = _safe_json_loads(content)
     poem_draft = PoemSchema.model_validate(data)
     return poem_draft
 
@@ -273,23 +373,67 @@ Behoud dezelfde titel, thema en stijl. Hou rekening met uitgesloten woorden: {st
 Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra tekst.
 """
     model = getattr(settings, 'EDITOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini'))
-    completion = client.chat.completions.create(
-        model=model,
-        messages=[
-            {
-                "role": "system",
-                "content": "Je bent een Nederlandse eindredacteur. Controleer per strofe of de laatste woorden rijmen volgens het opgegeven schema en de opgegeven eindklanken. Herschrijf alleen regels die falen, en zorg dat nieuwe regels WEL rijmen."
-            },
-            {"role": "user", "content": check_prompt}
-        ],
-        temperature=0.4,
-        max_tokens=900,
-        response_format={"type": "json_object"},
-        timeout=40,
-    )
-
-    poem_json = completion.choices[0].message.content or ""
-    final_poem = PoemSchema.model_validate(_safe_json_loads(poem_json))
+    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'openai/gpt-4o-mini')
+    use_json_mode = _model_supports_json_mode(model)
+    try:
+        kwargs = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Je bent een Nederlandse eindredacteur. Controleer per strofe of de laatste woorden rijmen volgens het opgegeven schema en de opgegeven eindklanken. Herschrijf alleen regels die falen, en zorg dat nieuwe regels WEL rijmen."
+                },
+                {"role": "user", "content": check_prompt}
+            ],
+            "temperature": 0.4,
+            "max_tokens": 900,
+            "timeout": 40,
+        }
+        if use_json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        completion = client.chat.completions.create(**kwargs)
+        poem_json = _get_choice_content(completion.choices[0]) or ""
+        final_poem = PoemSchema.model_validate(_safe_json_loads(poem_json))
+    except Exception as e:
+        logger.warning(f"Editor JSON-mode faalde ({type(e).__name__}): {e}. Probeer zonder response_format.")
+        try:
+            kwargs = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Je bent een Nederlandse eindredacteur. Controleer per strofe of de laatste woorden rijmen volgens het opgegeven schema en de opgegeven eindklanken. Herschrijf alleen regels die falen, en zorg dat nieuwe regels WEL rijmen."
+                    },
+                    {"role": "user", "content": check_prompt}
+                ],
+                "temperature": 0.4,
+                "max_tokens": 900,
+                "timeout": 40,
+            }
+            completion = client.chat.completions.create(**kwargs)
+            poem_json = _get_choice_content(completion.choices[0]) or ""
+            final_poem = PoemSchema.model_validate(_safe_json_loads(poem_json))
+        except Exception as e2:
+            logger.warning(f"Editor zonder JSON-mode faalde ({type(e2).__name__}): {e2}. Fallback model wordt geprobeerd.")
+            kwargs = {
+                "model": fallback_model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Je bent een Nederlandse eindredacteur. Controleer per strofe of de laatste woorden rijmen volgens het opgegeven schema en de opgegeven eindklanken. Herschrijf alleen regels die falen, en zorg dat nieuwe regels WEL rijmen."
+                    },
+                    {"role": "user", "content": check_prompt}
+                ],
+                "temperature": 0.4,
+                "max_tokens": 900,
+                "timeout": 40,
+                "response_format": {"type": "json_object"} if _model_supports_json_mode(fallback_model) else None,
+            }
+            if kwargs["response_format"] is None:
+                del kwargs["response_format"]
+            completion = client.chat.completions.create(**kwargs)
+            poem_json = _get_choice_content(completion.choices[0]) or ""
+            final_poem = PoemSchema.model_validate(_safe_json_loads(poem_json))
     return final_poem
 
 class PoemCreateView(View):
