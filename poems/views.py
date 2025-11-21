@@ -55,19 +55,49 @@ def _safe_json_loads(text: str):
                 return json.loads(m.group(0))
             raise
 
+def _normalize_content(value) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        parts: list[str] = []
+        for part in value:
+            if isinstance(part, str):
+                parts.append(part)
+            elif isinstance(part, dict):
+                txt = ""
+                text_field = part.get("text") or part.get("content") or part.get("value")
+                if isinstance(text_field, str):
+                    txt = text_field
+                elif isinstance(text_field, dict):
+                    txt = text_field.get("value") or text_field.get("content") or ""
+                if txt:
+                    parts.append(txt)
+        return "".join(parts).strip()
+    if isinstance(value, dict):
+        for key in ("text", "value", "content"):
+            v = value.get(key)
+            if isinstance(v, str):
+                return v
+        return ""
+    return str(value)
+
 def _get_choice_content(choice) -> str:
     try:
-        msg = getattr(choice, 'message', None)
+        msg = getattr(choice, "message", None)
         if msg is not None:
-            c = getattr(msg, 'content', None)
-            if c:
-                return c
+            c = getattr(msg, "content", None)
+            text = _normalize_content(c)
+            if text:
+                return text
     except Exception:
         pass
     try:
-        t = getattr(choice, 'text', None)
-        if t:
-            return t
+        t = getattr(choice, "text", None)
+        text = _normalize_content(t)
+        if text:
+            return text
     except Exception:
         pass
     return ""
@@ -196,11 +226,34 @@ Regels:
 """
 
     model = getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview')
-    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'google/gemini-3-pro-preview')
+    fallback_model = getattr(settings, 'FALLBACK_MODEL', model)
     use_json_mode = _model_supports_json_mode(model)
+
+    kwargs = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 300,
+        "timeout": 25,
+    }
+    if use_json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
+
     try:
+        completion = client.chat.completions.create(**kwargs)
+        content = _get_choice_content(completion.choices[0]) or ""
+        structured_input = _safe_json_loads(content)
+        return structured_input
+    except Exception as e:
+        logger.warning(f"Planner-call faalde ({type(e).__name__}): {e}.")
+        if fallback_model == model:
+            raise
+
         kwargs = {
-            "model": model,
+            "model": fallback_model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input}
@@ -209,46 +262,12 @@ Regels:
             "max_tokens": 300,
             "timeout": 25,
         }
-        if use_json_mode:
+        if _model_supports_json_mode(fallback_model):
             kwargs["response_format"] = {"type": "json_object"}
         completion = client.chat.completions.create(**kwargs)
         content = _get_choice_content(completion.choices[0]) or ""
         structured_input = _safe_json_loads(content)
-    except Exception as e:
-        logger.warning(f"Planner JSON-mode faalde ({type(e).__name__}): {e}. Probeer zonder response_format.")
-        try:
-            kwargs = {
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_input}
-                ],
-                "temperature": 0.7,
-                "max_tokens": 300,
-                "timeout": 25,
-            }
-            completion = client.chat.completions.create(**kwargs)
-            content = _get_choice_content(completion.choices[0]) or ""
-            structured_input = _safe_json_loads(content)
-        except Exception as e2:
-            logger.warning(f"Planner zonder JSON-mode faalde ({type(e2).__name__}): {e2}. Fallback model wordt geprobeerd.")
-            kwargs = {
-                "model": fallback_model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_input}
-                ],
-                "temperature": 0.7,
-                "max_tokens": 300,
-                "timeout": 25,
-                "response_format": {"type": "json_object"} if _model_supports_json_mode(fallback_model) else None,
-            }
-            if kwargs["response_format"] is None:
-                del kwargs["response_format"]
-            completion = client.chat.completions.create(**kwargs)
-            content = _get_choice_content(completion.choices[0]) or ""
-            structured_input = _safe_json_loads(content)
-    return structured_input
+        return structured_input
 
 def _bepaal_aantal_strofen_op_basis_van_lengte(data):
     length = data.get('length', 'medium')
