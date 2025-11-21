@@ -228,6 +228,64 @@ def beschrijf_stijl_op_basis_van_de_user_input(data):
     return "Gebruik een passende stijl bij het gekozen thema en stemming, met duidelijke vorm."
 
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
+def _generate_poem_simple(data):
+    client = get_openai_client()
+
+    theme = data.get('theme', '')
+    style = data.get('style', 'rijmend')
+    mood = data.get('mood', '')
+    recipient = data.get('recipient', '')
+    season = data.get('season', '')
+    length = data.get('length', 'medium')
+    excluded_words = data.get('excluded_words', '').strip() or 'geen specifiek'
+
+    style_instruction = beschrijf_stijl_op_basis_van_de_user_input(data)
+
+    system_prompt = (
+        "Je bent een Nederlandse dichter.\n"
+        "Je schrijft veilige, familie-vriendelijke gedichten zonder ongepaste inhoud.\n"
+        "Geef ALLEEN het volledige gedicht terug, als platte tekst, zonder uitleg of JSON."
+    )
+
+    user_prompt = f"""
+Thema: {theme}
+Stijl: {style}
+Stemming (mood): {mood}
+Ontvanger: {recipient}
+Seizoen: {season}
+Gewenste lengte: {length}
+Uit te sluiten woorden: {excluded_words}
+
+Extra stijlinstructies:
+{style_instruction}
+
+Schrijf nu direct het volledige gedicht in het Nederlands.
+""".strip()
+
+    model = getattr(
+        settings,
+        'GENERATOR_MODEL',
+        getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview'),
+    )
+
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.7,
+        max_tokens=1200,
+        timeout=getattr(settings, 'OPENROUTER_TIMEOUT', 25),
+    )
+
+    text = _get_choice_content(completion.choices[0]) or ""
+    text = text.strip()
+    if not text:
+        raise ValueError("Lege respons van model bij het genereren van het gedicht.")
+    return text
+
+@retry_with_exponential_backoff(max_retries=3, initial_wait=5)
 def _process_user_input(data):
     """
     Verwerk gebruikersinvoer tot gestructureerde instructies.
@@ -546,23 +604,15 @@ class PoemCreateView(View):
                         'redirect_url': reverse('signup')
                     }, status=429)
 
-            # Genereer het gedicht
-            structured_input = _process_user_input(data)
-            poem_prompt = _generate_poem_prompt(structured_input, data)
-            poem_draft = _generate_draft_poem(poem_prompt)
+            # Genereer het gedicht (simpele modus)
+            poem_text = _generate_poem_simple(data)
 
-            combined_text = poem_draft.title + " " + " ".join(poem_draft.verses)
-            if contains_blocked_content(combined_text):
-                return JsonResponse({'status': 'error', 'message': 'Gegenereerde inhoud bevat ongepaste termen'}, status=400)
-
-            final_poem = _check_and_fix_rhyme(poem_draft, structured_input, data)
-            combined_text_final = final_poem.title + " " + " ".join(final_poem.verses)
-            if contains_blocked_content(combined_text_final):
+            if contains_blocked_content(poem_text):
                 return JsonResponse({'status': 'error', 'message': 'Gegenereerde inhoud bevat ongepaste termen'}, status=400)
 
             # Genereer een afbeelding met fal.ai op basis van het gedicht
             try:
-                image_prompt = f"{final_poem.title}. {data.get('theme', '')}"
+                image_prompt = f"{data.get('theme', '')} {data.get('mood', '')}"
                 image_url = generate_image_with_fal(image_prompt)
             except Exception as img_err:
                 logger.error(f"Fout bij genereren afbeelding: {img_err}")
@@ -577,7 +627,7 @@ class PoemCreateView(View):
                 length=data.get('length', ''),
                 recipient=data.get('recipient', ''),
                 excluded_words=data.get('excluded_words', ''),
-                generated_text=json.dumps(final_poem.dict(), ensure_ascii=False),
+                generated_text=poem_text,
                 image_url=image_url,
                 ip_address=ip_address,
                 created_at=now
