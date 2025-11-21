@@ -1,6 +1,7 @@
 import logging
 import json
 import re
+import requests
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
@@ -36,6 +37,39 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class PoemSchema(BaseModel):
     title: str
     verses: list[str]
+
+PLANNER_JSON_SCHEMA = {
+    "name": "poem_plan",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "rijmschema": {"type": "string"},
+            "aantal_strofen": {"type": "integer"},
+            "toon": {"type": "string"},
+            "thema": {"type": "string"},
+            "excluded_words": {"type": "string"},
+            "eindklanken_per_strofe": {
+                "type": "array",
+                "items": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+            "extra_instructies": {"type": "string"},
+        },
+        "required": [
+            "rijmschema",
+            "aantal_strofen",
+            "toon",
+            "thema",
+            "excluded_words",
+            "eindklanken_per_strofe",
+            "extra_instructies",
+        ],
+        "additionalProperties": False,
+    },
+}
 
 def _safe_json_loads(text: str):
     if not text or not isinstance(text, str):
@@ -198,7 +232,6 @@ def _process_user_input(data):
     """
     Verwerk gebruikersinvoer tot gestructureerde instructies.
     """
-    client = get_openai_client()
     user_input = f"""
     Thema: {data.get('theme', '')}
     Stijl: {data.get('style', 'rijmend')}
@@ -232,48 +265,53 @@ Regels:
 """
 
     model = getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview')
-    fallback_model = getattr(settings, 'FALLBACK_MODEL', model)
-    use_json_mode = _model_supports_json_mode(model)
 
-    kwargs = {
+    api_key = getattr(settings, 'OPENROUTER_API_KEY', None) or getattr(settings, 'OPENAI_API_KEY', None)
+    if not api_key:
+        raise ValueError("Geen OpenRouter of OpenAI API-key gevonden in settings.")
+
+    base_url = getattr(settings, 'OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1').rstrip('/')
+    url = f"{base_url}/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    http_referer = getattr(settings, 'OPENROUTER_HTTP_REFERER', None)
+    if http_referer:
+        headers["HTTP-Referer"] = http_referer
+    title = getattr(settings, 'OPENROUTER_TITLE', None)
+    if title:
+        headers["X-Title"] = title
+
+    payload = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input}
+            {"role": "user", "content": user_input},
         ],
-        "temperature": 0.7,
         "max_tokens": 300,
-        "timeout": 25,
+        "temperature": 0.7,
     }
-    if use_json_mode:
-        kwargs["response_format"] = {"type": "json_object"}
 
-    try:
-        completion = client.chat.completions.create(**kwargs)
-        content = _get_choice_content(completion.choices[0]) or ""
-        structured_input = _safe_json_loads(content)
-        return structured_input
-    except Exception as e:
-        logger.warning(f"Planner-call faalde ({type(e).__name__}): {e}.")
-        if fallback_model == model:
-            raise
-
-        kwargs = {
-            "model": fallback_model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_input}
-            ],
-            "temperature": 0.7,
-            "max_tokens": 300,
-            "timeout": 25,
+    if model.startswith("google/"):
+        payload["response_format"] = {
+            "type": "json_schema",
+            "json_schema": PLANNER_JSON_SCHEMA,
         }
-        if _model_supports_json_mode(fallback_model):
-            kwargs["response_format"] = {"type": "json_object"}
-        completion = client.chat.completions.create(**kwargs)
-        content = _get_choice_content(completion.choices[0]) or ""
-        structured_input = _safe_json_loads(content)
-        return structured_input
+
+    timeout = getattr(settings, 'OPENROUTER_TIMEOUT', 25)
+    resp = requests.post(url, headers=headers, json=payload, timeout=timeout)
+    resp.raise_for_status()
+    data = resp.json()
+
+    if not data.get("choices"):
+        raise ValueError("Lege of ongeldige JSON-respons van model")
+
+    message = data["choices"][0].get("message", {})
+    content = _normalize_content(message.get("content"))
+    structured_input = _safe_json_loads(content)
+    return structured_input
 
 def _bepaal_aantal_strofen_op_basis_van_lengte(data):
     length = data.get('length', 'medium')
