@@ -208,6 +208,8 @@ LOGOUT_REDIRECT_URL = '/'  # Redirect naar homepage na uitloggen
 LOGIN_URL = 'login'  # URL voor de login pagina
 
 # OpenRouter model configuratie
-PLANNER_MODEL = env('PLANNER_MODEL', default='google/gemini-3-pro-preview')
+DEFAULT_MODEL = 'google/gemini-2.5-flash'
+PLANNER_MODEL = env('PLANNER_MODEL', default=DEFAULT_MODEL)
 GENERATOR_MODEL = env('GENERATOR_MODEL', default=PLANNER_MODEL)
 EDITOR_MODEL = env('EDITOR_MODEL', default=PLANNER_MODEL)
+FALLBACK_MODEL = env('FALLBACK_MODEL', default=PLANNER_MODEL)
