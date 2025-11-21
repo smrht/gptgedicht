@@ -175,6 +175,7 @@ OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', OPENAI_API_KEY)
 OPENROUTER_BASE_URL = os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
 OPENROUTER_HTTP_REFERER = os.getenv('OPENROUTER_HTTP_REFERER')
 OPENROUTER_TITLE = os.getenv('OPENROUTER_TITLE')
+OPENROUTER_TIMEOUT = env.int('OPENROUTER_TIMEOUT', default=25)
 
 
 LOGGING = {  
@@ -205,3 +206,8 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 LOGIN_REDIRECT_URL = '/'  # Redirect naar homepage na inloggen
 LOGOUT_REDIRECT_URL = '/'  # Redirect naar homepage na uitloggen
 LOGIN_URL = 'login'  # URL voor de login pagina
+
+# OpenRouter model configuratie
+PLANNER_MODEL = env('PLANNER_MODEL', default='openai/gpt-4o-mini')
+GENERATOR_MODEL = env('GENERATOR_MODEL', default=PLANNER_MODEL)
+EDITOR_MODEL = env('EDITOR_MODEL', default=PLANNER_MODEL)

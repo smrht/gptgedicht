@@ -1,5 +1,6 @@
 import logging
 import json
+import re
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
@@ -36,6 +37,24 @@ class PoemSchema(BaseModel):
     title: str
     verses: list[str]
 
+def _safe_json_loads(text: str):
+    if not text or not isinstance(text, str):
+        raise ValueError("Lege of ongeldige JSON-respons van model")
+    try:
+        return json.loads(text)
+    except Exception:
+        s = text.strip()
+        if s.startswith("```"):
+            s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s, flags=re.IGNORECASE | re.DOTALL)
+        s = s.strip()
+        try:
+            return json.loads(s)
+        except Exception:
+            m = re.search(r"\{.*\}", s, flags=re.DOTALL)
+            if m:
+                return json.loads(m.group(0))
+            raise
+
 def get_client_ip(request):
     """Haal het IP-adres van de gebruiker op."""
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -64,6 +83,7 @@ def get_openai_client():
         api_key=api_key,
         base_url=base_url,
         default_headers=default_headers or None,
+        timeout=getattr(settings, 'OPENROUTER_TIMEOUT', 25),
     )
     return client
 
@@ -71,10 +91,12 @@ def test_openai_connection():
     """Test of de OpenAI API goed werkt."""
     try:
         client = get_openai_client()
+        model = getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini')
         completion = client.chat.completions.create(
-            model="openai/gpt-5",
+            model=model,
             messages=[{"role": "user", "content": "Say 'API connection successful'"}],
-            max_tokens=10
+            max_tokens=10,
+            timeout=10,
         )
         return True, "API connection successful"
     except Exception as e:
@@ -151,16 +173,20 @@ Regels:
 4. Output MOET harde JSON zijn zonder extra tekst.
 """
 
+    model = getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini')
     completion = client.chat.completions.create(
-        model="openai/gpt-5",
+        model=model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input}
         ],
         temperature=0.7,
-        max_tokens=1000
+        max_tokens=300,
+        response_format={"type": "json_object"},
+        timeout=25,
     )
-    structured_input = json.loads(completion.choices[0].message.content)
+    content = completion.choices[0].message.content or ""
+    structured_input = _safe_json_loads(content)
     return structured_input
 
 def _bepaal_aantal_strofen_op_basis_van_lengte(data):
@@ -214,25 +240,30 @@ def _generate_draft_poem(poem_prompt):
     system_prompt = """Je bent een Nederlandse dichter die perfect kan voldoen aan bovenstaande instructies.
 Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
 """
-    completion = client.beta.chat.completions.parse(
-        model="openai/gpt-5",
+    model = getattr(settings, 'GENERATOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini'))
+    completion = client.chat.completions.create(
+        model=model,
         messages=[
             {"role": "system", "content": system_prompt + "\n\nEis: gebruik exact de eindklanken per strofe zoals aangeleverd. Elke regel moet eindigen op die klank of een woord dat duidelijk rijmt."},
             {"role": "user", "content": poem_prompt}
         ],
         temperature=0.6,
-        max_tokens=1500,
-        response_format=PoemSchema
+        max_tokens=1200,
+        response_format={"type": "json_object"},
+        timeout=40,
     )
-    poem_draft = completion.choices[0].message.parsed
+    content = completion.choices[0].message.content or ""
+    data = _safe_json_loads(content)
+    poem_draft = PoemSchema.model_validate(data)
     return poem_draft
 
 @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
 def _check_and_fix_rhyme(poem_draft, structured_input, data):
     client = get_openai_client()
+    poem_json_for_prompt = poem_draft.model_dump_json() if hasattr(poem_draft, 'model_dump_json') else poem_draft.json()
     check_prompt = f"""
 Dit is het gedicht dat je hebt gemaakt (in JSON):
-{poem_draft.json()}
+{poem_json_for_prompt}
 
 Rijmschema: {structured_input.get('rijmschema', 'aabb')}
 
@@ -241,8 +272,9 @@ Behoud dezelfde titel, thema en stijl. Hou rekening met uitgesloten woorden: {st
 
 Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra tekst.
 """
-    completion = client.beta.chat.completions.parse(
-        model="google/gemini-2.5-flash",
+    model = getattr(settings, 'EDITOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini'))
+    completion = client.chat.completions.create(
+        model=model,
         messages=[
             {
                 "role": "system",
@@ -251,12 +283,13 @@ Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra te
             {"role": "user", "content": check_prompt}
         ],
         temperature=0.4,
-        max_tokens=1500,
-        response_format=PoemSchema
+        max_tokens=900,
+        response_format={"type": "json_object"},
+        timeout=40,
     )
 
-    poem_json = completion.choices[0].message.content
-    final_poem = PoemSchema.model_validate_json(poem_json)
+    poem_json = completion.choices[0].message.content or ""
+    final_poem = PoemSchema.model_validate(_safe_json_loads(poem_json))
     return final_poem
 
 class PoemCreateView(View):
@@ -562,14 +595,16 @@ Voeg humor en persoonlijke details toe waar mogelijk."""
             prompt += f" Extra context: {data['additional_info']}"
 
         client = get_openai_client()
+        model = getattr(settings, 'GENERATOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini'))
         completion = client.chat.completions.create(
-            model="openai/gpt-5",
+            model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=2500
+            max_tokens=1200,
+            timeout=40,
         )
 
         generated_text = completion.choices[0].message.content.strip()
