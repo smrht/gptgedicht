@@ -113,7 +113,7 @@ def test_openai_connection():
     """Test of de OpenAI API goed werkt."""
     try:
         client = get_openai_client()
-        model = getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini')
+        model = getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview')
         completion = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "Say 'API connection successful'"}],
@@ -195,8 +195,8 @@ Regels:
 4. Output MOET harde JSON zijn zonder extra tekst.
 """
 
-    model = getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini')
-    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'openai/gpt-4o-mini')
+    model = getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview')
+    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'google/gemini-3-pro-preview')
     use_json_mode = _model_supports_json_mode(model)
     try:
         kwargs = {
@@ -301,8 +301,8 @@ def _generate_draft_poem(poem_prompt):
     system_prompt = """Je bent een Nederlandse dichter die perfect kan voldoen aan bovenstaande instructies.
 Je geeft het antwoord uitsluitend in het JSON-formaat zoals gevraagd.
 """
-    model = getattr(settings, 'GENERATOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini'))
-    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'openai/gpt-4o-mini')
+    model = getattr(settings, 'GENERATOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview'))
+    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'google/gemini-3-pro-preview')
     use_json_mode = _model_supports_json_mode(model)
     try:
         kwargs = {
@@ -372,8 +372,8 @@ Behoud dezelfde titel, thema en stijl. Hou rekening met uitgesloten woorden: {st
 
 Antwoord opnieuw in exact hetzelfde JSON-formaat (title, verses) zonder extra tekst.
 """
-    model = getattr(settings, 'EDITOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini'))
-    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'openai/gpt-4o-mini')
+    model = getattr(settings, 'EDITOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview'))
+    fallback_model = getattr(settings, 'FALLBACK_MODEL', 'google/gemini-3-pro-preview')
     use_json_mode = _model_supports_json_mode(model)
     try:
         kwargs = {
@@ -739,7 +739,7 @@ Voeg humor en persoonlijke details toe waar mogelijk."""
             prompt += f" Extra context: {data['additional_info']}"
 
         client = get_openai_client()
-        model = getattr(settings, 'GENERATOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'openai/gpt-4o-mini'))
+        model = getattr(settings, 'GENERATOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview'))
         completion = client.chat.completions.create(
             model=model,
             messages=[
