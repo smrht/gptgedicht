@@ -309,8 +309,14 @@ Regels:
         raise ValueError("Lege of ongeldige JSON-respons van model")
 
     message = data["choices"][0].get("message", {})
-    content = _normalize_content(message.get("content"))
-    structured_input = _safe_json_loads(content)
+    raw_content = message.get("content")
+
+    if isinstance(raw_content, dict):
+        structured_input = raw_content
+    else:
+        content = _normalize_content(raw_content)
+        structured_input = _safe_json_loads(content)
+
     return structured_input
 
 def _bepaal_aantal_strofen_op_basis_van_lengte(data):
