@@ -610,13 +610,8 @@ class PoemCreateView(View):
             if contains_blocked_content(poem_text):
                 return JsonResponse({'status': 'error', 'message': 'Gegenereerde inhoud bevat ongepaste termen'}, status=400)
 
-            # Genereer een afbeelding met fal.ai op basis van het gedicht
-            try:
-                image_prompt = f"{data.get('theme', '')} {data.get('mood', '')}"
-                image_url = generate_image_with_fal(image_prompt)
-            except Exception as img_err:
-                logger.error(f"Fout bij genereren afbeelding: {img_err}")
-                image_url = ""
+            # Voor nu geen afbeelding genereren
+            image_url = ""
 
             # Gedicht opslaan in de database
             poem = Poem(
