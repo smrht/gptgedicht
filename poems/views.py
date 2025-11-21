@@ -74,6 +74,12 @@ def _normalize_content(value) -> str:
                     txt = text_field.get("value") or text_field.get("content") or ""
                 if txt:
                     parts.append(txt)
+            else:
+                text_attr = getattr(part, "text", None)
+                if isinstance(text_attr, str):
+                    parts.append(text_attr)
+                else:
+                    parts.append(str(part))
         return "".join(parts).strip()
     if isinstance(value, dict):
         for key in ("text", "value", "content"):
