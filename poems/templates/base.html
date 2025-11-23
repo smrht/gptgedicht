@@ -23,53 +23,55 @@
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <div class="container mx-auto px-4 py-8 max-w-4xl flex-grow">
         <!-- Header met authenticatie en credits -->
-        <header class="mb-6 flex flex-col md:flex-row justify-between items-center">
-            <div class="mb-4 md:mb-0">
-                <a href="{% url 'poem_create' %}" class="no-underline hover:no-underline">
-                    <h1 class="text-5xl font-bold text-indigo-600">GedichtGPT</h1>
-                </a>
-                <p class="text-gray-700 text-lg">Maak eenvoudig prachtige en persoonlijke gedichten met AI.</p>
+        <header class="mb-6">
+            <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl px-5 py-4 md:px-8 md:py-5 flex flex-col md:flex-row md:items-center md:justify-between text-white">
+                <div class="mb-4 md:mb-0">
+                    <a href="{% url 'poem_create' %}" class="no-underline hover:no-underline">
+                        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">GedichtGPT</h1>
+                    </a>
+                    <p class="text-indigo-100 text-sm md:text-base mt-1">Maak eenvoudig prachtige en persoonlijke gedichten met AI.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    {% if user.is_authenticated %}
+                        <span class="hidden md:inline-flex text-xs md:text-sm bg-white/10 rounded-full px-3 py-1">Credits: <span class="font-semibold ml-1">{{ user.profile.credits }}</span></span>
+                        <a href="{% url 'purchase_credits' %}" class="text-xs md:text-sm bg-white text-indigo-700 font-semibold px-3 py-1.5 rounded-full shadow-sm hover:bg-indigo-50 transition">Koop credits</a>
+                        <a href="{% url 'logout' %}" class="text-xs md:text-sm text-indigo-50 hover:text-white underline-offset-2">Uitloggen</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-xs md:text-sm text-indigo-100 hover:text-white underline-offset-2">Inloggen</a>
+                        <a href="{% url 'signup' %}" class="text-xs md:text-sm bg-white text-indigo-700 font-semibold px-3 md:px-4 py-1.5 rounded-full shadow-sm hover:bg-indigo-50 transition">Registreren</a>
+                    {% endif %}
+                </div>
             </div>
-            <div>
-                {% if user.is_authenticated %}
-                    <span class="text-gray-700 mr-4">Credits: {{ user.profile.credits }}</span>
-                    <a href="{% url 'purchase_credits' %}" class="text-indigo-600 hover:underline mr-4">Koop Credits</a>
-                    <a href="{% url 'logout' %}" class="text-indigo-600 hover:underline">Uitloggen</a>
-                {% else %}
-                    <a href="{% url 'login' %}" class="text-indigo-600 hover:underline mr-4">Inloggen</a>
-                    <a href="{% url 'signup' %}" class="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition duration-200">Registreren</a>
-                {% endif %}
-            </div>
-        </header>
 
-        <!-- Hoofd navigatie -->
-        <nav class="mb-10 bg-white rounded-lg shadow-sm border border-gray-200">
-            <ul class="flex flex-wrap items-center text-sm md:text-base">
-                <li class="border-b md:border-b-0 md:border-r border-gray-200">
-                    <a href="{% url 'poem_create' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Home</a>
-                </li>
-                <li class="border-b md:border-b-0 md:border-r border-gray-200">
-                    <a href="{% url 'sinterklaas_poem_create' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Sinterklaas</a>
-                </li>
-                <li class="border-b md:border-b-0 md:border-r border-gray-200">
-                    <a href="{% url 'about' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Over ons</a>
-                </li>
-                <li class="border-b md:border-b-0 md:border-r border-gray-200">
-                    <a href="{% url 'contact' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Contact</a>
-                </li>
-                <li class="border-b md:border-b-0 md:border-r border-gray-200">
-                    <a href="{% url 'privacy' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Privacy</a>
-                </li>
-                <li class="border-b md:border-b-0 md:border-r border-gray-200">
-                    <a href="{% url 'terms' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Voorwaarden</a>
-                </li>
-                {% if user.is_authenticated %}
-                    <li class="border-gray-200 md:border-r">
-                        <a href="{% url 'dashboard' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Dashboard</a>
+            <!-- Hoofd navigatie -->
+            <nav class="mt-4 md:mt-5">
+                <ul class="bg-white rounded-full shadow-sm border border-gray-200 flex flex-wrap items-center text-xs md:text-sm">
+                    <li>
+                        <a href="{% url 'poem_create' %}" class="block px-4 md:px-5 py-2 rounded-full hover:bg-indigo-50 hover:text-indigo-700">Home</a>
                     </li>
-                {% endif %}
-            </ul>
-        </nav>
+                    <li>
+                        <a href="{% url 'sinterklaas_poem_create' %}" class="block px-4 md:px-5 py-2 rounded-full hover:bg-indigo-50 hover:text-indigo-700">Sinterklaas</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'about' %}" class="block px-4 md:px-5 py-2 rounded-full hover:bg-indigo-50 hover:text-indigo-700">Over ons</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'contact' %}" class="block px-4 md:px-5 py-2 rounded-full hover:bg-indigo-50 hover:text-indigo-700">Contact</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'privacy' %}" class="block px-4 md:px-5 py-2 rounded-full hover:bg-indigo-50 hover:text-indigo-700">Privacy</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'terms' %}" class="block px-4 md:px-5 py-2 rounded-full hover:bg-indigo-50 hover:text-indigo-700">Voorwaarden</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="ml-auto">
+                            <a href="{% url 'dashboard' %}" class="block px-4 md:px-5 py-2 rounded-full hover:bg-indigo-50 hover:text-indigo-700">Dashboard</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
 
         {% block content %}{% endblock %}
         

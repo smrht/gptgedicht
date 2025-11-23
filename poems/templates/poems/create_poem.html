@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}GedichtGPT - AI Gedichten Generator{% endblock %}
+{% block title %}GedichtGPT ✍️ AI gedichten generator{% endblock %}
 
-{% block description %}GedichtGPT: Dé plek om met behulp van AI (ChatGPT) prachtige gedichten te maken voor elke gelegenheid. Van sinterklaasgedichten tot kerst, van valentijnsdag tot trouwerij, en meer.{% endblock %}
+{% block description %}Maak in seconden een persoonlijk gedicht met onze AI gedichten generator. Gratis 2 gedichten maken voor Sinterklaas, kerst, verjaardag, huwelijk en meer.{% endblock %}
 
-{% block keywords %}gedicht gpt, chatgpt gedicht maken, sinterklaasgedichten, kerstgedichten, valentijnsdag gedichten, trouwerij gedichten, AI gedichten generator{% endblock %}
+{% block keywords %}gedichten generator, gedicht generator, ai gedicht maken, gedicht maken met ai, chatgpt gedicht maken, persoonlijk gedicht maken, gratis gedicht maken, sinterklaas gedichten generator, kerstgedicht generator, ai rijm generator{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -16,6 +16,46 @@
         display: flex;
     }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Wat is GedichtGPT en hoe werkt de AI gedichten generator?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "GedichtGPT is een online gedichten generator die AI gebruikt om persoonlijke gedichten te schrijven. Je kiest thema, stijl, stemming en lengte, vult eventueel steekwoorden in en de AI maakt automatisch een passend gedicht in het Nederlands."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is GedichtGPT gratis te gebruiken?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Iedere bezoeker kan gratis twee gedichten maken met onze AI gedichten generator. Daarna kun je extra credits kopen, zodat je alleen betaalt voor de gedichten die je daadwerkelijk laat schrijven."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Kan ik Sinterklaas- en kerstgedichten laten maken met AI?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Ja, GedichtGPT is zeer geschikt als sinterklaas gedichten generator en kerstgedicht generator. Je vult in voor wie het gedicht is en welke stijl je wilt en de AI maakt een volledig rijmend Sinterklaas- of kerstgedicht."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Mag ik de AI-gedichten aanpassen en zelf gebruiken?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "De gedichten die je met GedichtGPT maakt, mag je zelf aanpassen, printen en gebruiken in surprises, kaarten of andere persoonlijke projecten. We raden aan het resultaat altijd even door te lezen en indien nodig te bewerken naar je eigen smaak."
+      }
+    }
+  ]
+}
+</script>
 {% endblock %}
 
 {% block content %}
@@ -181,11 +221,11 @@
         </div>
     </section>
 
-    <!-- Informative Section for SEO -->
+    <!-- Over GedichtGPT: uitleg en voorbeelden -->
     <section class="mb-12">
         <h2 class="text-3xl font-bold text-gray-800 mb-6">Over GedichtGPT</h2>
         <p class="text-gray-700 mb-4">
-            GedichtGPT is een innovatieve AI-gedichten generator die gebruik maakt van de kracht van ChatGPT om prachtige, gepersonaliseerde gedichten te creëren voor elke gelegenheid. Of je nu een liefdesgedicht voor Valentijnsdag wilt maken, een vrolijk sinterklaasgedicht, een sfeervol kerstgedicht, een inspirerend gedicht voor een trouwerij, of een gedicht voor een verjaardag – GedichtGPT maakt het eenvoudig en snel.
+            GedichtGPT is een innovatieve <strong>AI-gedichten generator</strong> die gebruik maakt van de kracht van ChatGPT om prachtige, gepersonaliseerde gedichten te creëren voor elke gelegenheid. Of je nu een liefdesgedicht voor Valentijnsdag wilt maken, een vrolijk sinterklaasgedicht, een sfeervol kerstgedicht, een inspirerend gedicht voor een trouwerij, of een gedicht voor een verjaardag – GedichtGPT maakt het eenvoudig en snel.
         </p>
         <p class="text-gray-700 mb-4">
             Onze tool biedt een breed scala aan stijlen, waaronder traditionele rijmende gedichten, moderne vrije vormen, haiku's, limericks, sonnetten en acrostichons. Kies de stijl die het beste past bij jouw wensen en laat de AI jouw ideeën omzetten in een uniek meesterwerk.
@@ -193,15 +233,17 @@
         <p class="text-gray-700 mb-4">
             GedichtGPT is niet alleen veelzijdig in stijl, maar ook in thema en stemming. Of je nu een vrolijk, melancholisch, romantisch, inspirerend of rustig gedicht nodig hebt, onze tool houdt rekening met al jouw voorkeuren. Bovendien kun je specifieke woorden uitsluiten om ervoor te zorgen dat het gedicht precies aansluit bij jouw behoeften.
         </p>
+
         <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Waarom GedichtGPT?</h3>
         <ul class="list-disc list-inside text-gray-700 mb-4">
             <li><strong>Eenvoudig te gebruiken:</strong> Geen technische kennis nodig. Voer simpelweg je voorkeuren in en ontvang binnen enkele seconden een prachtig gedicht.</li>
             <li><strong>Personalisatie:</strong> Pas het gedicht aan op basis van thema, stijl, stemming en specifieke wensen.</li>
-            <li><strong>Veelzijdigheid:</strong> Geschikt voor diverse gelegenheden zoals sinterklaas, kerst, valentijnsdag, trouwerijen, verjaardagen en meer.</li>
+            <li><strong>Veelzijdigheid:</strong> Geschikt voor diverse gelegenheden zoals sinterklaas, kerst, Valentijnsdag, trouwerijen, verjaardagen en meer.</li>
             <li><strong>Unieke content:</strong> Elk gedicht is origineel en uniek, gegenereerd door AI.</li>
             <li><strong>Snelheid:</strong> Ontvang je gedicht direct zonder wachttijd.</li>
         </ul>
-        <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Hoe Werkt GedichtGPT?</h3>
+
+        <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Hoe werkt GedichtGPT?</h3>
         <ol class="list-decimal list-inside text-gray-700 mb-4">
             <li><strong>Selecteer een thema:</strong> Kies het onderwerp van je gedicht, zoals liefde, vriendschap, kerst, sinterklaas, etc.</li>
             <li><strong>Kies een stijl:</strong> Selecteer de gewenste dichtvorm, zoals rijmend, haiku, limerick, sonnet, enzovoort.</li>
@@ -209,7 +251,8 @@
             <li><strong>Pas extra opties aan:</strong> Selecteer het seizoen, de lengte van het gedicht en voeg eventueel woorden toe die niet in het gedicht mogen voorkomen.</li>
             <li><strong>Genereer het gedicht:</strong> Klik op "Genereer Gedicht" en ontvang binnen enkele seconden een prachtig, persoonlijk gedicht.</li>
         </ol>
-        <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Voorbeelden van Seizoensgebonden Gedichten</h3>
+
+        <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Voorbeelden van seizoensgebonden gedichten</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <h4 class="text-xl font-semibold text-indigo-600 mb-2">Sinterklaasgedichten</h4>
@@ -224,25 +267,119 @@
                 </p>
             </div>
             <div>
-                <h4 class="text-xl font-semibold text-indigo-600 mb-2">Valentijnsdag Gedichten</h4>
+                <h4 class="text-xl font-semibold text-indigo-600 mb-2">Valentijnsdag gedichten</h4>
                 <p class="text-gray-700">
                     Toon je liefde op een unieke manier met een persoonlijk Valentijnsdag gedicht. Onze AI helpt je om je gevoelens perfect te verwoorden in een prachtig gedicht dat je geliefde zeker zal waarderen.
                 </p>
+                <div class="mt-4 flex justify-center">
+                    <img
+                        src="https://media.ulazai.com/liefdesgedicht.png"
+                        alt="Voorbeeld van een liefdesgedicht gemaakt met GedichtGPT"
+                        class="rounded-xl shadow-lg max-w-full md:max-w-xs border border-pink-100"
+                        loading="lazy"
+                    />
+                </div>
             </div>
             <div>
-                <h4 class="text-xl font-semibold text-indigo-600 mb-2">Trouwerij Gedichten</h4>
+                <h4 class="text-xl font-semibold text-indigo-600 mb-2">Trouwerij gedichten</h4>
                 <p class="text-gray-700">
                     Maak de trouwerij van je dromen compleet met een prachtig trouwgedicht. Of het nu gaat om een officiële toespraak of een intiem gedicht voor de bruid en bruidegom, GedichtGPT biedt de perfecte woorden.
                 </p>
             </div>
         </div>
-        <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Start Nu met Het Maken van Je Gedicht</h3>
+
+        <h3 class="text-2xl font-semibold text-gray-800 mt-6 mb-4">Start nu met het maken van je gedicht</h3>
         <p class="text-gray-700 mb-4">
             Het maken van een mooi gedicht is nog nooit zo eenvoudig geweest. Met GedichtGPT heb je de kracht van AI binnen handbereik. Probeer het vandaag nog en ontdek hoe eenvoudig het is om prachtige gedichten te maken voor elke gelegenheid.
         </p>
         <p class="text-gray-700">
             Zoekwoorden zoals <em>gedicht GPT</em> en <em>ChatGPT gedicht maken</em> helpen ons om jou te bereiken wanneer je op zoek bent naar originele poëzie. Laat GedichtGPT jouw inspiratiebron zijn en maak je eigen meesterwerk met slechts een paar klikken!
         </p>
+
+        <div class="mt-8 flex justify-center">
+            <img
+                src="https://media.ulazai.com/ChatGPT%20Image%2023%20nov%202025%2C%2016_47_04.png"
+                alt="Voorbeeld van de GedichtGPT AI gedichten generator in gebruik"
+                class="rounded-2xl shadow-2xl max-w-full md:max-w-xl border border-gray-100"
+                loading="lazy"
+            />
+        </div>
+    </section>
+
+    <!-- Informative Section for SEO -->
+    <section class="mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Over onze AI gedichten generator</h2>
+        <p class="text-gray-700 mb-4">
+            GedichtGPT is een complete <strong>gedichten generator</strong> en <strong>gedicht generator</strong> voor iedereen die snel een mooi <strong>gedicht maken</strong> wil. Met onze slimme <strong>gedichtengenerator</strong> kun je in een paar klikken een <strong>persoonlijk gedicht maken</strong>, of je nu een korte boodschap zoekt of uitgebreide <strong>gedichten maken</strong> wilt voor een speciale gelegenheid.
+        </p>
+        <p class="text-gray-700 mb-4">
+            De kern van GedichtGPT is <strong>ai gedicht maken</strong>: je kunt eenvoudig een <strong>gedicht maken met ai</strong> of een volledig <strong>ai gedicht</strong> laten schrijven. Onze technologie ondersteunt zowel simpele <strong>gedicht ai</strong> ideeën als langere <strong>gedichten ai</strong> voor mensen die veel details willen opnemen. Dankzij onze slimme motor werkt GedichtGPT ook als <strong>ai gedichten generator</strong>, <strong>ai gedicht generator</strong>, <strong>gedicht ai generator</strong> en zelfs als creatieve <strong>ai gedichten schrijver</strong>.
+        </p>
+        <p class="text-gray-700 mb-4">
+            Gebruik je liever ChatGPT‑achtige prompts? Dan kun je bij ons eenvoudig een <strong>gedicht maken met chatgpt</strong> of simpelweg <strong>gedicht maken chat gpt</strong> in je hoofd houden terwijl je de velden invult. Veel bezoekers gebruiken GedichtGPT als praktische manier om een <strong>chat gpt gedicht maken</strong> opdracht uit te voeren. Zo ontstaat er moeiteloos een <strong>chatgpt gedicht</strong>, en voor veel eenvoudige opdrachten voelt het bijna als een <strong>chatgpt gedicht gratis</strong> optie omdat je <strong>gratis gedicht maken</strong> kunt binnen je limiet.
+        </p>
+        <p class="text-gray-700 mb-4">
+            Onze <strong>gedichten maker</strong> helpt je stap voor stap: je kunt een <strong>gedicht maken met steekwoorden</strong> of vrij tekst invoeren om een <strong>gedicht maken met woorden</strong>. De tool werkt als een moderne <strong>gedichten maker app</strong>, maar dan direct in je browser. Dankzij de ingebouwde <strong>ai rijm generator</strong> voelt het als een slimme <strong>gedichten maken rijmmachine</strong> of <strong>gedichten generator rijmen</strong> die automatisch het juiste rijm voor je zoekt.
+        </p>
+        <p class="text-gray-700 mb-4">
+            Je kunt ook kiezen voor specifieke stijlen: een <strong>gedichten generator grappig</strong> voor humoristische teksten, een <strong>gedichten generator kerst</strong> of <strong>kerst gedichten generator</strong> voor het einde van het jaar, of een <strong>sinterklaas gedichten generator</strong> om het heerlijk avondje extra leuk te maken. Met onze modellen kun je zowel een klassiek <strong>kerstgedicht maken</strong> of <strong>kerst gedicht maken</strong> als een moderne <strong>kerstgedicht ai</strong> versie of volledige <strong>kerstgedicht generator</strong> gebruiken. Voor het najaar is er ook ondersteuning voor <strong>sinterklaas gedichten ai</strong>, zodat je nooit meer vastloopt bij het rijmen.
+        </p>
+        <p class="text-gray-700 mb-4">
+            Omdat alles draait om AI, kun je bij ons <strong>ai gedichten maken</strong>, langere <strong>ai gedichten</strong> genereren of juist een kort <strong>ai gedicht</strong> laten schrijven. Veel bezoekers noemen GedichtGPT hun favoriete <strong>ai gedichten generator</strong> en <strong>gedichten generator ai</strong>, omdat je zowel een speels <strong>gedicht met ai</strong> als een serieus gedicht kunt bouwen. Wil je vooral snel starten, dan fungeert de site als een laagdrempelige <strong>gedicht maker</strong> of <strong>gedichten maker</strong> waar je in een paar klikken resultaat ziet.
+        </p>
+        <p class="text-gray-700 mb-4">
+            Specifiek voor rijm kun je onze tool gebruiken om <strong>rijm maken met ai</strong>. De combinatie van <strong>gedichten maken met ai</strong> en een slimme <strong>ai rijm generator</strong> zorgt ervoor dat je teksten vloeiend klinken. Veel gebruikers ervaren het alsof ze een persoonlijke <strong>gedicht schrijven ai</strong> assistent naast zich hebben: je beschrijft wat je wilt zeggen en onze AI helpt je het <strong>gedicht schrijven</strong> te verfijnen.
+        </p>
+        <p class="text-gray-700">
+            Of je nu op zoek bent naar een eenvoudige <strong>ai gedicht maken</strong> oplossing, uitgebreid <strong>gedichten maken ai</strong> wilt verkennen, een speelse <strong>gedicht chat gpt</strong> variant zoekt of juist een serie <strong>gedichten generator kerst</strong> teksten nodig hebt: met GedichtGPT kun je vandaag nog <strong>gedicht maken ai</strong> en ontdekken hoe makkelijk moderne poëzie kan zijn.
+        </p>
+    </section>
+
+    <!-- Zichtbare FAQ-sectie -->
+    <section class="mb-12 bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Veelgestelde vragen over GedichtGPT</h2>
+
+        <div class="space-y-4">
+            <details class="group border border-gray-200 rounded-xl p-4">
+                <summary class="flex items-center justify-between cursor-pointer list-none">
+                    <span class="font-semibold text-gray-800">Wat is GedichtGPT en hoe werkt de AI gedichten generator?</span>
+                    <span class="ml-4 text-gray-400 group-open:rotate-180 transition-transform">⌄</span>
+                </summary>
+                <p class="mt-3 text-gray-700 text-sm md:text-base">
+                    GedichtGPT is een online <strong>gedichten generator</strong> die AI gebruikt om persoonlijke gedichten te schrijven. Je kiest thema, stijl, stemming en lengte, vult eventueel steekwoorden in en onze AI maakt automatisch een passend Nederlands gedicht dat je daarna zelf nog kunt aanpassen.
+                </p>
+            </details>
+
+            <details class="group border border-gray-200 rounded-xl p-4">
+                <summary class="flex items-center justify-between cursor-pointer list-none">
+                    <span class="font-semibold text-gray-800">Is GedichtGPT gratis te gebruiken?</span>
+                    <span class="ml-4 text-gray-400 group-open:rotate-180 transition-transform">⌄</span>
+                </summary>
+                <p class="mt-3 text-gray-700 text-sm md:text-base">
+                    Ja. Iedere bezoeker kan gratis twee gedichten maken met onze AI gedichten generator. Daarna kun je credits kopen, zodat je alleen betaalt voor de extra gedichten die je laat schrijven. Er is geen abonnement en geen kleine lettertjes.
+                </p>
+            </details>
+
+            <details class="group border border-gray-200 rounded-xl p-4">
+                <summary class="flex items-center justify-between cursor-pointer list-none">
+                    <span class="font-semibold text-gray-800">Kan ik Sinterklaas- en kerstgedichten laten maken met AI?</span>
+                    <span class="ml-4 text-gray-400 group-open:rotate-180 transition-transform">⌄</span>
+                </summary>
+                <p class="mt-3 text-gray-700 text-sm md:text-base">
+                    Absoluut. GedichtGPT is zeer geschikt als <strong>sinterklaas gedichten generator</strong> en <strong>kerstgedicht generator</strong>. Je vult in voor wie het gedicht is en welke toon en stijl je wilt, en de AI maakt een volledig rijmend Sinterklaas- of kerstgedicht dat je direct kunt gebruiken in een surprise of kaart.
+                </p>
+            </details>
+
+            <details class="group border border-gray-200 rounded-xl p-4">
+                <summary class="flex items-center justify-between cursor-pointer list-none">
+                    <span class="font-semibold text-gray-800">Mag ik de AI-gedichten aanpassen en zelf gebruiken?</span>
+                    <span class="ml-4 text-gray-400 group-open:rotate-180 transition-transform">⌄</span>
+                </summary>
+                <p class="mt-3 text-gray-700 text-sm md:text-base">
+                    Ja, de gedichten die je met GedichtGPT maakt, mag je naar wens aanpassen, printen en gebruiken in surprises, kaarten, speeches en andere persoonlijke projecten. We raden wel aan het resultaat altijd even door te lezen en indien nodig te finetunen naar jouw eigen stijl.
+                </p>
+            </details>
+        </div>
     </section>
 
     <!-- Credit Pakketten -->

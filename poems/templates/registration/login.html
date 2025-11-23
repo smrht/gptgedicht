@@ -12,21 +12,24 @@
             font-family: 'Poppins', sans-serif;
         }
         .gradient-background {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* Sluit aan bij de gradient van de homepage */
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 50%, #ec4899 100%);
         }
         .form-container {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(18px);
+            background: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
         }
     </style>
     
 </head>
 <body class="gradient-background min-h-screen flex items-center justify-center p-4">
-    <div class="form-container p-8 rounded-xl shadow-2xl max-w-md w-full mx-4">
+    <div class="form-container p-8 rounded-2xl max-w-md w-full mx-4">
 <!-- Logo/Header -->
 <div class="text-center mb-8">
-    <h1 class="text-3xl font-bold text-indigo-600 mb-2">GedichtGPT</h1>
-    <p class="text-gray-600">Welkom terug! Log in om verder te gaan.</p>
+    <h1 class="text-3xl font-bold text-indigo-600 mb-1">GedichtGPT</h1>
+    <p class="text-sm text-indigo-500 font-medium">AI gedichten generator</p>
+    <p class="text-gray-600 mt-2">Welkom terug! Log in om verder te gaan.</p>
       <a href="{% url 'poem_create' %}" 
          class="inline-block mt-4 text-sm text-gray-500 hover:text-indigo-600 transition-colors">
           ← Direct een gedicht maken
@@ -55,7 +58,7 @@
                         Registreer nu
                     </a>
                 </p>
-                <a href="#" class="block text-sm text-gray-500 hover:text-indigo-600 transition-colors">
+                <a href="{% url 'password_reset' %}" class="block text-sm text-gray-500 hover:text-indigo-600 transition-colors">
                     Wachtwoord vergeten?
                 </a>
             </div>
