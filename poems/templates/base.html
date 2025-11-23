@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}GedichtGPT - AI Gedichten Generator{% endblock %}</title>
+    <meta name="google-adsense-account" content="ca-pub-4056808917976250">
+    <meta name="google-site-verification" content="52sb7I_vix6hLYnyIMyEsp4_2Xs0RKVpRdgCFJZONz8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block description %}GedichtGPT: Dé plek om met behulp van AI (ChatGPT) prachtige gedichten te maken voor elke gelegenheid. Van sinterklaasgedichten tot kerst, van valentijnsdag tot trouwerij, en meer.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}gedicht gpt, chatgpt gedicht maken, sinterklaasgedichten, kerstgedichten, valentijnsdag gedichten, trouwerij gedichten, AI gedichten generator{% endblock %}">
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .loading {
+            display: none;
+        }
+        .loading.active {
+            display: flex;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <div class="container mx-auto px-4 py-8 max-w-4xl flex-grow">
+        <!-- Header met authenticatie en credits -->
+        <header class="mb-6 flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <a href="{% url 'poem_create' %}" class="no-underline hover:no-underline">
+                    <h1 class="text-5xl font-bold text-indigo-600">GedichtGPT</h1>
+                </a>
+                <p class="text-gray-700 text-lg">Maak eenvoudig prachtige en persoonlijke gedichten met AI.</p>
+            </div>
+            <div>
+                {% if user.is_authenticated %}
+                    <span class="text-gray-700 mr-4">Credits: {{ user.profile.credits }}</span>
+                    <a href="{% url 'purchase_credits' %}" class="text-indigo-600 hover:underline mr-4">Koop Credits</a>
+                    <a href="{% url 'logout' %}" class="text-indigo-600 hover:underline">Uitloggen</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-indigo-600 hover:underline mr-4">Inloggen</a>
+                    <a href="{% url 'signup' %}" class="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition duration-200">Registreren</a>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Hoofd navigatie -->
+        <nav class="mb-10 bg-white rounded-lg shadow-sm border border-gray-200">
+            <ul class="flex flex-wrap items-center text-sm md:text-base">
+                <li class="border-b md:border-b-0 md:border-r border-gray-200">
+                    <a href="{% url 'poem_create' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Home</a>
+                </li>
+                <li class="border-b md:border-b-0 md:border-r border-gray-200">
+                    <a href="{% url 'sinterklaas_poem_create' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Sinterklaas</a>
+                </li>
+                <li class="border-b md:border-b-0 md:border-r border-gray-200">
+                    <a href="{% url 'about' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Over ons</a>
+                </li>
+                <li class="border-b md:border-b-0 md:border-r border-gray-200">
+                    <a href="{% url 'contact' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Contact</a>
+                </li>
+                <li class="border-b md:border-b-0 md:border-r border-gray-200">
+                    <a href="{% url 'privacy' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Privacy</a>
+                </li>
+                <li class="border-b md:border-b-0 md:border-r border-gray-200">
+                    <a href="{% url 'terms' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Voorwaarden</a>
+                </li>
+                {% if user.is_authenticated %}
+                    <li class="border-gray-200 md:border-r">
+                        <a href="{% url 'dashboard' %}" class="block px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700">Dashboard</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        {% block content %}{% endblock %}
+        
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white mt-12 border-t border-gray-200">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <div class="flex flex-col md:flex-row justify-between items-center text-gray-600 text-sm">
+                <div class="mb-4 md:mb-0">
+                    &copy; {% now "Y" %} GedichtGPT. Alle rechten voorbehouden.
+                </div>
+                <div class="flex space-x-4">
+                    <a href="{% url 'about' %}" class="hover:text-indigo-600">Over Ons</a>
+                    <a href="{% url 'privacy' %}" class="hover:text-indigo-600">Privacybeleid</a>
+                    <a href="{% url 'terms' %}" class="hover:text-indigo-600">Algemene Voorwaarden</a>
+                    <a href="{% url 'contact' %}" class="hover:text-indigo-600">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

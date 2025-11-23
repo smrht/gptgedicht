@@ -86,6 +86,16 @@
         <button class="btn btn-primary retry-button">Probeer opnieuw</button>
         
         <div id="poemResult" class="poem-result" style="display: none;"></div>
+    
+        <footer class="text-center mt-5 mb-4 text-muted border-top pt-3">
+            <p>&copy; {% now "Y" %} GedichtGPT. Alle rechten voorbehouden.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'about' %}" class="text-decoration-none text-secondary">Over Ons</a>
+                <a href="{% url 'privacy' %}" class="text-decoration-none text-secondary">Privacybeleid</a>
+                <a href="{% url 'terms' %}" class="text-decoration-none text-secondary">Algemene Voorwaarden</a>
+                <a href="{% url 'contact' %}" class="text-decoration-none text-secondary">Contact</a>
+            </div>
+        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

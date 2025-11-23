@@ -567,8 +567,9 @@ class PoemCreateView(View):
     template_name = 'poems/create_poem.html'
 
     def get(self, request, *args, **kwargs):
-        # Render de HTML pagina met het formulier
-        return render(request, self.template_name)
+        # Render de HTML pagina met het formulier en een teller van alle gedichten
+        total_poems = Poem.objects.count()
+        return render(request, self.template_name, {"total_poems": total_poems})
 
     def post(self, request, *args, **kwargs):
         try:

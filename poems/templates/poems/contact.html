@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact - GedichtGPT{% endblock %}
+
+{% block content %}
+<section class="bg-white rounded-lg shadow-lg p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Contact</h1>
+    
+    <p class="text-gray-700 mb-6">
+        Heeft u vragen, opmerkingen of suggesties? Wij horen graag van u! U kunt contact met ons opnemen via onderstaande gegevens.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+            <h2 class="text-xl font-semibold text-gray-800 mb-3">Algemene Vragen</h2>
+            <p class="text-gray-700 mb-4">
+                Voor vragen over het gebruik van de website, uw account of credits.
+            </p>
+            <p class="text-indigo-600 font-medium">
+                info@gedichtgpt.nl
+            </p>
+        </div>
+
+        <div>
+            <h2 class="text-xl font-semibold text-gray-800 mb-3">Technische Ondersteuning</h2>
+            <p class="text-gray-700 mb-4">
+                Ervaart u problemen met de generator of de website?
+            </p>
+            <p class="text-indigo-600 font-medium">
+                support@gedichtgpt.nl
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-8 p-6 bg-gray-50 rounded border border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-800 mb-3">Veelgestelde Vragen</h2>
+        <p class="text-gray-700 mb-2"><strong>V: Is GedichtGPT gratis?</strong></p>
+        <p class="text-gray-600 mb-4">A: Ja, u kunt gratis een beperkt aantal gedichten genereren. Voor meer gebruik kunt u credits aanschaffen.</p>
+
+        <p class="text-gray-700 mb-2"><strong>V: Kan ik mijn gedichten opslaan?</strong></p>
+        <p class="text-gray-600 mb-4">A: Ja, als u een account aanmaakt, worden uw gedichten opgeslagen in uw dashboard.</p>
+    </div>
+</section>
+{% endblock %}

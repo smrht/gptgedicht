@@ -1,10 +1,15 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
 from .views import checkout_complete, checkout_success, PoemCreateView, SinterklaasPoemCreateView, SignupView, CreditPurchaseView, StripeWebhookView, DashboardView, CheckoutCompleteView
 
 urlpatterns = [
     path('', PoemCreateView.as_view(), name='poem_create'),
     path('sinterklaas/', SinterklaasPoemCreateView.as_view(), name='sinterklaas_poem_create'),
+    path('over-ons/', TemplateView.as_view(template_name='poems/about.html'), name='about'),
+    path('privacy/', TemplateView.as_view(template_name='poems/privacy.html'), name='privacy'),
+    path('voorwaarden/', TemplateView.as_view(template_name='poems/terms.html'), name='terms'),
+    path('contact/', TemplateView.as_view(template_name='poems/contact.html'), name='contact'),
     path('login/', auth_views.LoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('signup/', SignupView.as_view(), name='signup'),
