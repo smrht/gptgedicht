@@ -88,7 +88,7 @@ class Poem(models.Model):
     @classmethod
     def check_rate_limit(cls, ip_address, user=None):
         # Als de gebruiker ingelogd is, kunnen we voor de gratis limiet per maand checken.
-        # Anders, per dag op IP-basis.
+        # Anders, per week op IP-basis.
         if user and user.is_authenticated:
             # Gratis limiet per maand voor ingelogde gebruikers
             now = timezone.now()
@@ -97,8 +97,8 @@ class Poem(models.Model):
             poems_count = cls.objects.filter(user=user, created_at__month=month, created_at__year=year).count()
             return poems_count >= 2
         else:
-            # Anonieme gebruikers: dagelijks limiet op IP
-            time_threshold = timezone.now() - timedelta(days=1)
+            # Anonieme gebruikers: wekelijks limiet op IP
+            time_threshold = timezone.now() - timedelta(days=7)
             poems_count = cls.objects.filter(
                 ip_address=ip_address,
                 created_at__gte=time_threshold

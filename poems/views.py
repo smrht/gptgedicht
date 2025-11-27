@@ -595,13 +595,13 @@ class PoemCreateView(View):
                         }, status=402)
                     # Trek 1 credit af als straks opslaan slaagt.
             else:
-                # Anoniem: limit per dag (24 uur)
-                past_24h = now - timedelta(days=1)
-                poems_count = Poem.objects.filter(ip_address=ip_address, created_at__gte=past_24h).count()
+                # Anoniem: limit per week (7 dagen)
+                past_week = now - timedelta(days=7)
+                poems_count = Poem.objects.filter(ip_address=ip_address, created_at__gte=past_week).count()
                 if poems_count >= 2:
                     return JsonResponse({
                         'status': 'error',
-                        'message': 'Je hebt het maximale aantal gedichten (2) voor vandaag bereikt. Maak een account en koop credits om meer te genereren.',
+                        'message': 'Je hebt het maximale aantal gedichten (2) voor deze week bereikt. Maak een account en koop credits om meer te genereren.',
                         'redirect_url': reverse('signup')
                     }, status=429)
 
