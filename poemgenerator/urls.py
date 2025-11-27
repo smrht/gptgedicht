@@ -20,7 +20,5 @@ from poems.views import PoemCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', PoemCreateView.as_view(), name='poem_create'),
     path('', include('poems.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),
 ]

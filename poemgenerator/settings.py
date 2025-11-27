@@ -207,6 +207,15 @@ LOGIN_REDIRECT_URL = '/'  # Redirect naar homepage na inloggen
 LOGOUT_REDIRECT_URL = '/'  # Redirect naar homepage na uitloggen
 LOGIN_URL = 'login'  # URL voor de login pagina
 
+# Email settings
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='GedichtGPT <noreply@gedichtgpt.nl>')
+
 # OpenRouter model configuratie
 DEFAULT_MODEL = 'google/gemini-2.5-flash'
 PLANNER_MODEL = env('PLANNER_MODEL', default=DEFAULT_MODEL)
