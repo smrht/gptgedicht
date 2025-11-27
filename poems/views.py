@@ -571,6 +571,7 @@ class PoemCreateView(View):
         total_poems = Poem.objects.count()
         return render(request, self.template_name, {"total_poems": total_poems})
 
+    @method_decorator(ratelimit(key='ip', rate='5/m', method=['POST'], block=True))
     def post(self, request, *args, **kwargs):
         try:
             # Lees JSON data
@@ -790,7 +791,7 @@ class SinterklaasPoemCreateView(CreateView):
     template_name = 'poems/create_sinterklaas_poem.html'
     success_url = reverse_lazy('sinterklaas_poem_create')
 
-    @method_decorator(ratelimit(key='ip', rate='5/m', method=['POST']))
+    @method_decorator(ratelimit(key='ip', rate='5/m', method=['POST'], block=True))
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
