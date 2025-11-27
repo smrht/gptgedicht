@@ -1,9 +1,20 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
+from django.http import HttpResponse
+from django.conf import settings
+import os
 from .views import checkout_complete, checkout_success, PoemCreateView, SinterklaasPoemCreateView, SignupView, CreditPurchaseView, StripeWebhookView, DashboardView, CheckoutCompleteView
 
+def ads_txt(request):
+    """Serve ads.txt for Google AdSense verification"""
+    ads_path = os.path.join(settings.BASE_DIR, 'ads.txt')
+    with open(ads_path, 'r') as f:
+        content = f.read()
+    return HttpResponse(content, content_type='text/plain')
+
 urlpatterns = [
+    path('ads.txt', ads_txt, name='ads_txt'),
     path('', PoemCreateView.as_view(), name='poem_create'),
     path('sinterklaas/', SinterklaasPoemCreateView.as_view(), name='sinterklaas_poem_create'),
     path('over-ons/', TemplateView.as_view(template_name='poems/about.html'), name='about'),
