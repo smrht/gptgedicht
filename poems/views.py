@@ -764,6 +764,7 @@ class SignupView(View):
         form = SignupForm()
         return render(request, 'registration/signup.html', {'form': form})
     
+    @method_decorator(ratelimit(key='ip', rate='5/h', method=['POST'], block=True))
     def post(self, request):
         form = SignupForm(request.POST)
         if form.is_valid():

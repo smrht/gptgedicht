@@ -93,7 +93,19 @@ class SinterklaasPoemForm(forms.ModelForm):
 
 class SignupForm(UserCreationForm):
     email = forms.EmailField(required=True, help_text="Voer een geldig e-mailadres in.")
+    # Honeypot veld - als dit ingevuld is, is het een bot
+    website = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'autocomplete': 'off',
+        'tabindex': '-1',
+    }))
 
     class Meta:
         model = User
         fields = ('username', 'email', 'password1', 'password2')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Honeypot check - als website veld is ingevuld, is het een bot
+        if cleaned_data.get('website'):
+            raise forms.ValidationError("Spam gedetecteerd.")
+        return cleaned_data

@@ -101,6 +101,12 @@
             <form method="post" class="space-y-5">
                 {% csrf_token %}
                 
+                <!-- Honeypot - verborgen voor gebruikers, zichtbaar voor bots -->
+                <div style="position: absolute; left: -9999px; opacity: 0; height: 0; overflow: hidden;" aria-hidden="true">
+                    <label for="id_website">Laat dit veld leeg</label>
+                    <input type="text" name="website" id="id_website" tabindex="-1" autocomplete="off">
+                </div>
+                
                 <!-- Username -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Gebruikersnaam</label>
