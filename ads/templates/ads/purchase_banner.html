@@ -3,6 +3,30 @@
 {% block title %}Koop Banner: {{ position.name }}{% endblock %}
 
 {% block content %}
+<!-- Compacte USP Banner -->
+<div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl shadow-lg p-4 md:p-6 mb-6 text-white">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h2 class="text-lg font-bold">Waarom adverteren op GedichtGPT?</h2>
+            <p class="text-indigo-200 text-sm">Bereik duizenden bezoekers met een DoFollow backlink</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <div class="bg-white/10 rounded-lg px-3 py-2 text-center">
+                <div class="text-lg font-bold">2K-5K</div>
+                <div class="text-xs text-indigo-200">per dag</div>
+            </div>
+            <div class="bg-white/10 rounded-lg px-3 py-2 text-center">
+                <div class="text-lg font-bold">DR 50</div>
+                <div class="text-xs text-indigo-200">Domain Rating</div>
+            </div>
+            <div class="bg-white/10 rounded-lg px-3 py-2 text-center">
+                <div class="text-lg font-bold text-green-300">DoFollow</div>
+                <div class="text-xs text-indigo-200">Backlink</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
     <a href="{% url 'ads:positions_list' %}" class="text-indigo-600 hover:underline text-sm mb-4 inline-block">
         ← Terug naar alle posities
