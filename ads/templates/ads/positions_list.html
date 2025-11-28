@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Adverteer op GedichtGPT{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Adverteer op GedichtGPT</h1>
+    <p class="text-gray-600 mb-8">
+        Bereik duizenden bezoekers per dag met een banner op onze website. 
+        Kies een positie, upload je banner en je bent direct zichtbaar!
+    </p>
+
+    <div class="grid md:grid-cols-2 gap-6">
+        {% for position in positions %}
+        <div class="border rounded-xl p-5 {% if position.has_active_banner %}bg-gray-50 opacity-75{% else %}hover:border-indigo-300 hover:shadow-md transition{% endif %}">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800">{{ position.name }}</h3>
+                    <span class="text-sm text-gray-500">{{ position.get_dimensions }} pixels</span>
+                </div>
+                {% if position.has_active_banner %}
+                <span class="bg-orange-100 text-orange-700 text-xs font-medium px-2 py-1 rounded-full">Bezet</span>
+                {% else %}
+                <span class="bg-green-100 text-green-700 text-xs font-medium px-2 py-1 rounded-full">Beschikbaar</span>
+                {% endif %}
+            </div>
+            
+            {% if position.description %}
+            <p class="text-gray-600 text-sm mb-4">{{ position.description }}</p>
+            {% endif %}
+
+            <div class="bg-gray-100 rounded-lg p-4 mb-4">
+                <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                    <div>
+                        <div class="text-gray-500">Maand</div>
+                        <div class="font-bold text-indigo-600">€{{ position.price_month }}</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-500">Kwartaal</div>
+                        <div class="font-bold text-indigo-600">€{{ position.price_quarter }}</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-500">Jaar</div>
+                        <div class="font-bold text-indigo-600">€{{ position.price_year }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if position.has_active_banner %}
+            <button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded-lg cursor-not-allowed">
+                Momenteel bezet
+            </button>
+            {% else %}
+            <a href="{% url 'ads:purchase_banner' position.slug %}" 
+               class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 rounded-lg transition">
+                Koop deze positie
+            </a>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="col-span-2 text-center py-12 text-gray-500">
+            Er zijn momenteel geen banner posities beschikbaar.
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-8 p-4 bg-indigo-50 rounded-lg">
+        <h4 class="font-semibold text-indigo-800 mb-2">Hoe werkt het?</h4>
+        <ol class="text-sm text-indigo-700 space-y-1">
+            <li>1. Kies een beschikbare positie</li>
+            <li>2. Selecteer je gewenste periode</li>
+            <li>3. Upload je banner in de juiste afmetingen</li>
+            <li>4. Betaal veilig via iDEAL of creditcard</li>
+            <li>5. Je banner is direct zichtbaar!</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Betaling Geslaagd!{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-lg p-8 text-center max-w-xl mx-auto">
+    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+    </div>
+    
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Bedankt voor je aankoop!</h1>
+    <p class="text-gray-600 mb-6">Je banner is nu actief op GedichtGPT.</p>
+    
+    <div class="bg-gray-50 rounded-xl p-6 text-left mb-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Aankoopdetails</h3>
+        <dl class="space-y-2 text-sm">
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Positie:</dt>
+                <dd class="font-medium">{{ purchase.position.name }}</dd>
+            </div>
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Periode:</dt>
+                <dd class="font-medium">{{ purchase.get_period_display }}</dd>
+            </div>
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Bedrag:</dt>
+                <dd class="font-medium">€{{ purchase.price_paid }}</dd>
+            </div>
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Actief tot:</dt>
+                <dd class="font-medium">{{ purchase.end_date|date:"d F Y" }}</dd>
+            </div>
+        </dl>
+    </div>
+    
+    <p class="text-sm text-gray-500 mb-6">
+        Een bevestiging is verzonden naar <strong>{{ purchase.buyer_email }}</strong>
+    </p>
+    
+    <a href="{% url 'poem_create' %}" 
+       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-lg transition">
+        Terug naar de homepage
+    </a>
+</div>
+{% endblock %}

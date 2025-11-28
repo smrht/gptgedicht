@@ -20,5 +20,6 @@ from poems.views import PoemCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('adverteren/', include('ads.urls')),
     path('', include('poems.urls')),
 ]

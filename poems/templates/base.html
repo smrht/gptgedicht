@@ -86,13 +86,29 @@
             </nav>
         </header>
 
+        <!-- Banner: Tussen nav en content -->
+        {% load ads_tags %}
+        <div class="mb-6 flex justify-center">
+            {% banner_slot_inline 'header' %}
+        </div>
+
         {% block content %}{% endblock %}
+        
+        <!-- Banner: Onder content -->
+        <div class="mt-8 flex justify-center">
+            {% banner_slot_inline 'below_content' %}
+        </div>
         
     </div>
 
     <!-- Footer -->
     <footer class="bg-white mt-12 border-t border-gray-200">
         <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <!-- Banner: Footer -->
+            <div class="mb-6 flex justify-center">
+                {% banner_slot_inline 'footer' %}
+            </div>
+            
             <div class="flex flex-col md:flex-row justify-between items-center text-gray-600 text-sm">
                 <div class="mb-4 md:mb-0">
                     &copy; {% now "Y" %} GedichtGPT. Alle rechten voorbehouden.
