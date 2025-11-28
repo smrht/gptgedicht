@@ -3,10 +3,88 @@
 {% block title %}Adverteer op GedichtGPT{% endblock %}
 
 {% block content %}
+<!-- USP Hero Section -->
+<div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl shadow-xl p-6 md:p-8 mb-6 text-white">
+    <h1 class="text-3xl font-bold mb-2">Adverteer op GedichtGPT</h1>
+    <p class="text-indigo-100 mb-6">
+        Bereik duizenden bezoekers per dag met een banner op onze website.
+    </p>
+    
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold">2K-5K</div>
+            <div class="text-sm text-indigo-200">Bezoekers/dag</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold">DR 50</div>
+            <div class="text-sm text-indigo-200">Domain Rating</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold text-green-300">DoFollow</div>
+            <div class="text-sm text-indigo-200">Backlinks</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold">100K+</div>
+            <div class="text-sm text-indigo-200">Bezoekers/maand</div>
+        </div>
+    </div>
+
+    <!-- Mini Traffic Graph -->
+    <div class="bg-white/10 backdrop-blur rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-medium">Dagelijks verkeer (laatste 7 dagen)</span>
+            <span class="text-xs text-indigo-200">Bron: Google Analytics</span>
+        </div>
+        <div class="flex items-end gap-1 h-16">
+            <div class="flex-1 bg-white/30 rounded-t" style="height: 65%;" title="Ma: 3.2K"></div>
+            <div class="flex-1 bg-white/30 rounded-t" style="height: 80%;" title="Di: 4.1K"></div>
+            <div class="flex-1 bg-white/30 rounded-t" style="height: 70%;" title="Wo: 3.5K"></div>
+            <div class="flex-1 bg-white/30 rounded-t" style="height: 90%;" title="Do: 4.6K"></div>
+            <div class="flex-1 bg-white/40 rounded-t" style="height: 100%;" title="Vr: 5.0K"></div>
+            <div class="flex-1 bg-white/30 rounded-t" style="height: 55%;" title="Za: 2.8K"></div>
+            <div class="flex-1 bg-white/30 rounded-t" style="height: 50%;" title="Zo: 2.5K"></div>
+        </div>
+        <div class="flex justify-between text-xs text-indigo-200 mt-1">
+            <span>Ma</span><span>Di</span><span>Wo</span><span>Do</span><span>Vr</span><span>Za</span><span>Zo</span>
+        </div>
+    </div>
+</div>
+
+<!-- Benefits -->
+<div class="grid md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">DoFollow Backlink</h3>
+        <p class="text-sm text-gray-600">Verbeter je SEO met een waardevolle dofollow link vanaf een DR50 domein.</p>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">Hoge Zichtbaarheid</h3>
+        <p class="text-sm text-gray-600">Je banner wordt gezien door 60.000-150.000 bezoekers per maand.</p>
+    </div>
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-1">Direct Live</h3>
+        <p class="text-sm text-gray-600">Na betaling is je banner direct zichtbaar. Geen wachttijd of goedkeuring nodig.</p>
+    </div>
+</div>
+
 <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-2">Adverteer op GedichtGPT</h1>
-    <p class="text-gray-600 mb-8">
-        Bereik duizenden bezoekers per dag met een banner op onze website. 
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Beschikbare Posities</h2>
+    <p class="text-gray-600 mb-6">
         Kies een positie, upload je banner en je bent direct zichtbaar!
     </p>
 
@@ -64,15 +142,26 @@
         {% endfor %}
     </div>
 
-    <div class="mt-8 p-4 bg-indigo-50 rounded-lg">
-        <h4 class="font-semibold text-indigo-800 mb-2">Hoe werkt het?</h4>
-        <ol class="text-sm text-indigo-700 space-y-1">
-            <li>1. Kies een beschikbare positie</li>
-            <li>2. Selecteer je gewenste periode</li>
-            <li>3. Upload je banner in de juiste afmetingen</li>
-            <li>4. Betaal veilig via iDEAL of creditcard</li>
-            <li>5. Je banner is direct zichtbaar!</li>
-        </ol>
+    <!-- Trust badges -->
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            Veilig betalen via Stripe
+        </div>
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            iDEAL & Creditcard
+        </div>
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            Direct online
+        </div>
     </div>
 </div>
 {% endblock %}
