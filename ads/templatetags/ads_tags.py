@@ -104,7 +104,7 @@ def banner_slot_inline(position_type):
                               d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
                     </svg>
                     <span class="text-sm text-gray-500 group-hover:text-indigo-600 font-medium">
-                        Adverteer hier • Vanaf €{{ position.price_month }}/maand
+                        Adverteer hier • Vanaf €{position.price_month}/maand
                     </span>
                 </div>
             </a>

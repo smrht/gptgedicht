@@ -17,27 +17,27 @@
         <!-- Stap 1: Periode kiezen -->
         <div class="mb-8">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">1. Kies je periode</h2>
-            <div class="grid md:grid-cols-3 gap-4">
-                <label class="relative cursor-pointer">
-                    <input type="radio" name="period" value="month" class="peer hidden" checked>
-                    <div class="border-2 rounded-xl p-4 text-center peer-checked:border-indigo-500 peer-checked:bg-indigo-50 transition">
+            <div class="grid md:grid-cols-3 gap-4" id="period-options">
+                <label class="relative cursor-pointer period-label">
+                    <input type="radio" name="period" value="month" class="hidden" checked>
+                    <div class="period-card border-2 rounded-xl p-4 text-center transition border-indigo-500 bg-indigo-50">
                         <div class="text-xl font-bold text-gray-800">€{{ position.price_month }}</div>
                         <div class="text-gray-600">1 Maand</div>
                     </div>
                 </label>
                 
-                <label class="relative cursor-pointer">
-                    <input type="radio" name="period" value="quarter" class="peer hidden">
-                    <div class="border-2 rounded-xl p-4 text-center peer-checked:border-indigo-500 peer-checked:bg-indigo-50 transition">
+                <label class="relative cursor-pointer period-label">
+                    <input type="radio" name="period" value="quarter" class="hidden">
+                    <div class="period-card border-2 rounded-xl p-4 text-center transition border-gray-200">
                         <div class="text-xl font-bold text-gray-800">€{{ position.price_quarter }}</div>
                         <div class="text-gray-600">3 Maanden</div>
                         <span class="text-xs text-green-600 font-medium">Bespaar 12%</span>
                     </div>
                 </label>
                 
-                <label class="relative cursor-pointer">
-                    <input type="radio" name="period" value="year" class="peer hidden">
-                    <div class="border-2 rounded-xl p-4 text-center peer-checked:border-indigo-500 peer-checked:bg-indigo-50 transition">
+                <label class="relative cursor-pointer period-label">
+                    <input type="radio" name="period" value="year" class="hidden">
+                    <div class="period-card border-2 rounded-xl p-4 text-center transition border-gray-200">
                         <div class="text-xl font-bold text-gray-800">€{{ position.price_year }}</div>
                         <div class="text-gray-600">1 Jaar</div>
                         <span class="text-xs text-green-600 font-medium">Bespaar 24%</span>
@@ -141,7 +141,16 @@ const prices = {
 
 document.querySelectorAll('input[name="period"]').forEach(radio => {
     radio.addEventListener('change', function() {
+        // Update prijs
         document.getElementById('total-price').textContent = '€' + prices[this.value].toFixed(2);
+        
+        // Update visuele selectie
+        document.querySelectorAll('.period-card').forEach(card => {
+            card.classList.remove('border-indigo-500', 'bg-indigo-50');
+            card.classList.add('border-gray-200');
+        });
+        this.parentElement.querySelector('.period-card').classList.remove('border-gray-200');
+        this.parentElement.querySelector('.period-card').classList.add('border-indigo-500', 'bg-indigo-50');
     });
 });
 
