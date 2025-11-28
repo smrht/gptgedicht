@@ -171,8 +171,15 @@ def stripe_webhook(request):
             try:
                 purchase = BannerPurchase.objects.get(purchase_id=purchase_id)
                 if purchase.status == 'pending':
-                    purchase.stripe_payment_intent = session.get('payment_intent', '')
-                    purchase.activate()
+                    # Extra check: is de positie nog vrij?
+                    if purchase.position.has_active_banner():
+                        # Positie is al bezet door iemand anders - refund nodig
+                        purchase.status = 'cancelled'
+                        purchase.save()
+                        # TODO: Trigger automatische Stripe refund hier
+                    else:
+                        purchase.stripe_payment_intent = session.get('payment_intent', '')
+                        purchase.activate()
             except BannerPurchase.DoesNotExist:
                 pass
     
