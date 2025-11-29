@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.core.exceptions import ValidationError
 from pydantic import BaseModel
 from .models import Poem, Profile
-from .forms import PoemForm, SinterklaasPoemForm
+from .forms import PoemForm, SinterklaasPoemForm, ValentijnsPoemForm
 from .utils import contains_blocked_content, retry_with_exponential_backoff, generate_image_with_fal
 from openai import OpenAI
 from django.utils import timezone
@@ -893,6 +893,128 @@ Toon: {data['mood']}"""
             raise ValueError("Gegenereerde inhoud bevat ongepaste termen")
 
         return generated_text
+
+
+class ValentijnsPoemCreateView(CreateView):
+    """View voor het genereren van Valentijnsgedichten."""
+    model = Poem
+    form_class = ValentijnsPoemForm
+    template_name = 'poems/create_valentijn_poem.html'
+    success_url = reverse_lazy('valentijn_poem_create')
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+    @method_decorator(ratelimit(key='ip', rate='5/m', method=['POST'], block=True))
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+
+            # Check blocked content
+            for field in ['recipient', 'eigenschappen', 'herinneringen']:
+                if contains_blocked_content(cleaned_data.get(field, '')):
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Sorry, dit type inhoud is niet toegestaan.'
+                    }, status=400)
+
+            poem = form.save(commit=False)
+
+            try:
+                poem.generated_text = self._generate_valentijn_poem(cleaned_data)
+                poem.full_clean()
+                poem.save()
+                return JsonResponse({
+                    'status': 'success',
+                    'poem': poem.generated_text
+                })
+            except ValidationError as e:
+                logger.error(f"Validatie fout: {e}")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': str(e)
+                }, status=400)
+            except Exception as e:
+                logger.error(f"Fout bij genereren Valentijnsgedicht: {e}")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Er is een fout opgetreden bij het genereren van het gedicht.'
+                }, status=500)
+        else:
+            logger.error(f"Form validation errors: {form.errors}")
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Ongeldige gegevens: {form.errors.as_text()}'
+            }, status=400)
+
+    @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
+    def _generate_valentijn_poem(self, data):
+        """Genereer een romantisch Valentijnsgedicht."""
+        
+        # Bepaal aantal strofen op basis van lengte
+        length_map = {'kort': 3, 'medium': 5, 'lang': 7}
+        num_strofes = length_map.get(data.get('length', 'medium'), 5)
+        
+        system_prompt = f"""Je bent een meester-dichter gespecialiseerd in romantische Nederlandse liefdesgedichten voor Valentijnsdag.
+
+RIJMREGELS (STRIKT):
+- Gebruik ABAB of AABB rijmschema
+- Zorg voor ZUIVER eindrijm
+- Elke regel heeft 8-12 lettergrepen voor goed ritme
+
+STRUCTUUR:
+- Schrijf exact {num_strofes} strofen van elk 4 regels
+- Elke strofe vormt een samenhangend geheel
+
+STIJL & TOON:
+- Toon: {data.get('mood', 'romantisch')}
+- Relatie: {data.get('relatie_type', 'partner')}
+- Warm, oprecht en persoonlijk
+- Familie-vriendelijk (geen expliciete inhoud)
+- Gebruik beeldspraak en metaforen over liefde
+
+INHOUD:
+- Verwerk de eigenschappen en herinneringen in het gedicht
+- Maak het persoonlijk en uniek
+- Eindig met een mooie afsluiting over de liefde
+
+OUTPUT: Geef ALLEEN het gedicht, geen titel of uitleg."""
+
+        prompt = f"""Schrijf een Valentijnsgedicht voor: {data['recipient']}
+
+Relatie: {data.get('relatie_type', 'partner')}
+Toon: {data.get('mood', 'romantisch')}"""
+        
+        if data.get('eigenschappen'):
+            prompt += f"\nWat ik leuk vind aan deze persoon: {data['eigenschappen']}"
+        if data.get('herinneringen'):
+            prompt += f"\nSpeciale herinneringen: {data['herinneringen']}"
+
+        client = get_openai_client()
+        model = settings.GENERATOR_MODEL
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1500,
+            timeout=45,
+        )
+
+        raw_content = completion.choices[0].message.content
+        generated_text = _normalize_content(raw_content).strip()
+
+        if not generated_text:
+            raise ValueError("Lege response van model")
+
+        if contains_blocked_content(generated_text):
+            raise ValueError("Gegenereerde inhoud bevat ongepaste termen")
+
+        return generated_text
+
 
 class CheckoutCompleteView(LoginRequiredMixin, View):
     def get(self, request):

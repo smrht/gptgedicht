@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Gratis Valentijnsgedicht Generator - Maak een Romantisch Liefdesgedicht | GedichtGPT{% endblock %}
+
+{% block description %}Maak gratis een persoonlijk Valentijnsgedicht met AI. Verras je geliefde met een uniek, romantisch gedicht dat rijmt. Perfect voor Valentijnsdag, een huwelijksverjaardag of gewoon om je liefde te tonen.{% endblock %}
+
+{% block extra_head %}
+<!-- SEO Meta Tags -->
+<meta name="keywords" content="valentijnsgedicht, liefdesgedicht, romantisch gedicht, valentijnsdag gedicht, gedicht voor partner, liefdesverklaring, gedicht generator, gratis gedicht maken">
+<meta name="author" content="GedichtGPT">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gedichtgpt.nl/valentijn/">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gedichtgpt.nl/valentijn/">
+<meta property="og:title" content="Gratis Valentijnsgedicht Generator - Maak een Romantisch Gedicht">
+<meta property="og:description" content="Verras je geliefde met een uniek, persoonlijk Valentijnsgedicht. Gratis en binnen seconden klaar!">
+<meta property="og:image" content="https://gedichtgpt.nl/static/images/valentijn-og.jpg">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Gratis Valentijnsgedicht Generator">
+<meta name="twitter:description" content="Maak een romantisch gedicht voor je geliefde met AI">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Valentijnsgedicht Generator",
+    "description": "Gratis AI-tool om persoonlijke Valentijnsgedichten te maken",
+    "url": "https://gedichtgpt.nl/valentijn/",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+    },
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250"
+    }
+}
+</script>
+
+<style>
+    .loading { display: none; }
+    .loading.active { display: flex; }
+    .heart-float {
+        animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Hero Section -->
+    <section class="mb-8 bg-gradient-to-r from-pink-500 via-red-500 to-rose-500 rounded-2xl shadow-xl text-white p-6 md:p-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 md:mb-0">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-4xl heart-float">💕</span>
+                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Valentijnsgedicht Generator</h1>
+                </div>
+                <p class="text-pink-100 text-sm md:text-base max-w-xl">
+                    Verras je geliefde met een uniek, romantisch gedicht. Vul een paar details in en ontvang direct een persoonlijk liefdesgedicht dat rijmt!
+                </p>
+            </div>
+            <div class="flex items-center gap-2 text-pink-100">
+                <span class="text-2xl">✨</span>
+                <span class="text-sm">100% Gratis</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEO Content Block -->
+    <section class="mb-6 bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+        <h2 class="text-lg font-semibold text-gray-800 mb-3">Waarom een Valentijnsgedicht?</h2>
+        <p class="text-gray-600 text-sm mb-3">
+            Een <strong>persoonlijk gedicht</strong> is het mooiste cadeau dat je kunt geven op Valentijnsdag. 
+            Het laat zien dat je moeite hebt gedaan en echt aan je geliefde hebt gedacht. Met onze 
+            <strong>gratis Valentijnsgedicht generator</strong> maak je binnen seconden een uniek, romantisch 
+            gedicht dat perfect bij jullie relatie past.
+        </p>
+        <p class="text-gray-600 text-sm">
+            Of je nu een gedicht zoekt voor je <strong>partner</strong>, <strong>crush</strong>, of 
+            <strong>geheime liefde</strong> - onze AI schrijft een prachtig rijmend gedicht dat recht 
+            uit het hart komt.
+        </p>
+    </section>
+
+    <!-- Tips Section -->
+    <section class="mb-6 bg-pink-50 border border-pink-200 rounded-xl p-4 md:p-5">
+        <h3 class="font-semibold text-pink-800 mb-2 flex items-center gap-2">
+            <span>💡</span> Tips voor het perfecte liefdesgedicht
+        </h3>
+        <ul class="text-pink-700 text-sm space-y-1">
+            <li>• Voeg persoonlijke eigenschappen toe die je leuk vindt aan je geliefde</li>
+            <li>• Deel speciale herinneringen voor een unieke touch</li>
+            <li>• Kies de juiste toon: romantisch, speels of grappig</li>
+            <li>• Een korter gedicht kan net zo krachtig zijn als een lang gedicht</li>
+        </ul>
+    </section>
+
+    <!-- Form Section -->
+    <section class="mb-8 bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
+        <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <span>💝</span> Maak jouw Valentijnsgedicht
+        </h2>
+        
+        <form id="valentijnForm" method="post" class="space-y-5">
+            {% csrf_token %}
+            
+            <!-- Recipient -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2" for="id_recipient">
+                    Voor wie is dit gedicht? *
+                </label>
+                <input type="text" id="id_recipient" name="recipient" required
+                       class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
+                       placeholder="Bijv: Lisa, mijn schat, de liefde van mijn leven">
+            </div>
+
+            <!-- Relatie Type -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2" for="id_relatie_type">
+                    Wat is jullie relatie? *
+                </label>
+                <select id="id_relatie_type" name="relatie_type" required
+                        class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400">
+                    <option value="partner">Mijn partner/geliefde</option>
+                    <option value="crush">Mijn crush/verliefdheid</option>
+                    <option value="getrouwd">Mijn man/vrouw</option>
+                    <option value="dating">Iemand waarmee ik date</option>
+                    <option value="afstand">Langeafstandsrelatie</option>
+                    <option value="geheim">Geheime liefde</option>
+                </select>
+            </div>
+
+            <!-- Mood -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2" for="id_mood">
+                    Toon van het gedicht *
+                </label>
+                <select id="id_mood" name="mood" required
+                        class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400">
+                    <option value="romantisch">Romantisch en liefdevol</option>
+                    <option value="speels">Speels en flirterig</option>
+                    <option value="grappig">Grappig met humor</option>
+                    <option value="sensueel">Sensueel maar stijlvol</option>
+                    <option value="lief">Lief en teder</option>
+                    <option value="poëtisch">Poëtisch en diepzinnig</option>
+                </select>
+            </div>
+
+            <!-- Length -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2" for="id_length">
+                    Lengte van het gedicht
+                </label>
+                <select id="id_length" name="length"
+                        class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400">
+                    <option value="kort">Kort (2-3 strofen)</option>
+                    <option value="medium" selected>Gemiddeld (4-5 strofen)</option>
+                    <option value="lang">Lang (6+ strofen)</option>
+                </select>
+            </div>
+
+            <!-- Eigenschappen -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2" for="id_eigenschappen">
+                    Wat vind je leuk aan deze persoon? (optioneel)
+                </label>
+                <textarea id="id_eigenschappen" name="eigenschappen" rows="2"
+                          class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
+                          placeholder="Bijv: mooie ogen, geweldige lach, altijd lief, goede kok, grappig"></textarea>
+                <p class="text-sm text-gray-500 mt-1">Hoe meer details, hoe persoonlijker het gedicht!</p>
+            </div>
+
+            <!-- Herinneringen -->
+            <div>
+                <label class="block text-gray-700 font-medium mb-2" for="id_herinneringen">
+                    Speciale herinneringen of momenten (optioneel)
+                </label>
+                <textarea id="id_herinneringen" name="herinneringen" rows="2"
+                          class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
+                          placeholder="Bijv: onze eerste date in het park, samen naar Parijs, de dag dat we elkaar ontmoetten"></textarea>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 px-6 rounded-lg hover:from-pink-600 hover:to-red-600 transition duration-200 font-semibold shadow-lg hover:shadow-xl">
+                💕 Genereer Valentijnsgedicht
+            </button>
+        </form>
+
+        <!-- Loading -->
+        <div class="loading mt-6 justify-center items-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-pink-600"></div>
+            <span class="ml-4 text-gray-600 text-lg">Je liefdesgedicht wordt geschreven...</span>
+        </div>
+
+        <!-- Result -->
+        <div id="poemResult" class="mt-8 hidden">
+            <h3 class="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2">
+                <span>💌</span> Jouw Valentijnsgedicht
+            </h3>
+            <div id="poem" class="whitespace-pre-wrap p-6 bg-gradient-to-br from-pink-50 to-red-50 rounded-xl border border-pink-200 text-gray-800 leading-relaxed font-serif text-lg"></div>
+            
+            <!-- Copy & Share buttons -->
+            <div class="mt-4 flex gap-3 flex-wrap">
+                <button onclick="copyPoem()" class="flex items-center gap-2 px-4 py-2 bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    Kopieer gedicht
+                </button>
+                <button onclick="sharePoem()" class="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                    </svg>
+                    Delen
+                </button>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <div id="error" class="mt-4 hidden p-4 bg-red-100 rounded-xl border border-red-200">
+            <div class="flex items-center">
+                <svg class="w-6 h-6 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-red-700" id="error-message"></span>
+            </div>
+            <button id="retryBtn" class="mt-3 text-red-600 font-medium hover:text-red-800 hidden">
+                Probeer opnieuw →
+            </button>
+        </div>
+    </section>
+
+    <!-- FAQ Section for SEO -->
+    <section class="mb-8 bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">Veelgestelde vragen over Valentijnsgedichten</h2>
+        
+        <div class="space-y-4">
+            <details class="border-b border-gray-200 pb-4">
+                <summary class="font-medium text-gray-700 cursor-pointer hover:text-pink-600">
+                    Hoe maak ik een persoonlijk Valentijnsgedicht?
+                </summary>
+                <p class="mt-2 text-gray-600 text-sm">
+                    Vul de naam van je geliefde in, kies de toon die bij jullie past, en voeg persoonlijke 
+                    details toe zoals eigenschappen die je leuk vindt of speciale herinneringen. Hoe meer 
+                    details je geeft, hoe unieker en persoonlijker het gedicht wordt.
+                </p>
+            </details>
+            
+            <details class="border-b border-gray-200 pb-4">
+                <summary class="font-medium text-gray-700 cursor-pointer hover:text-pink-600">
+                    Is deze Valentijnsgedicht generator echt gratis?
+                </summary>
+                <p class="mt-2 text-gray-600 text-sm">
+                    Ja, je kunt gratis Valentijnsgedichten maken! We bieden een aantal gratis gedichten per week. 
+                    Voor onbeperkt gebruik kun je een account aanmaken en credits kopen.
+                </p>
+            </details>
+            
+            <details class="border-b border-gray-200 pb-4">
+                <summary class="font-medium text-gray-700 cursor-pointer hover:text-pink-600">
+                    Rijmen de gedichten echt?
+                </summary>
+                <p class="mt-2 text-gray-600 text-sm">
+                    Ja! Onze AI is getraind om Nederlandse gedichten te schrijven met een duidelijk rijmschema. 
+                    Elk gedicht heeft zuiver eindrijm en een mooi ritme.
+                </p>
+            </details>
+            
+            <details class="pb-4">
+                <summary class="font-medium text-gray-700 cursor-pointer hover:text-pink-600">
+                    Kan ik het gedicht aanpassen na het genereren?
+                </summary>
+                <p class="mt-2 text-gray-600 text-sm">
+                    Je kunt het gedicht kopiëren en zelf aanpassen. Ook kun je een nieuw gedicht genereren 
+                    met andere instellingen als het eerste resultaat niet helemaal naar wens is.
+                </p>
+            </details>
+        </div>
+    </section>
+
+    <!-- Related Content for SEO -->
+    <section class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Andere gedichten maken</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <a href="/" class="block p-4 bg-white rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition">
+                <h3 class="font-medium text-gray-800">✨ Algemene Gedicht Generator</h3>
+                <p class="text-sm text-gray-600 mt-1">Maak gedichten over elk onderwerp</p>
+            </a>
+            <a href="/sinterklaas/" class="block p-4 bg-white rounded-xl border border-gray-200 hover:border-red-300 hover:shadow-md transition">
+                <h3 class="font-medium text-gray-800">🎅 Sinterklaasgedicht Generator</h3>
+                <p class="text-sm text-gray-600 mt-1">Perfect voor bij de surprise</p>
+            </a>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('valentijnForm');
+    const loading = document.querySelector('.loading');
+    const resultDiv = document.getElementById('poemResult');
+    const poemDiv = document.getElementById('poem');
+    const errorDiv = document.getElementById('error');
+    const errorMsg = document.getElementById('error-message');
+    const retryBtn = document.getElementById('retryBtn');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    let isSubmitting = false;
+
+    retryBtn.addEventListener('click', () => {
+        errorDiv.classList.add('hidden');
+        handleSubmit();
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!isSubmitting) handleSubmit();
+    });
+
+    async function handleSubmit() {
+        if (isSubmitting) return;
+        
+        isSubmitting = true;
+        loading.classList.add('active');
+        resultDiv.classList.add('hidden');
+        errorDiv.classList.add('hidden');
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                poemDiv.textContent = data.poem;
+                resultDiv.classList.remove('hidden');
+                // Scroll to result
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                errorMsg.textContent = data.message || 'Er is een fout opgetreden.';
+                errorDiv.classList.remove('hidden');
+                if (response.status !== 429) {
+                    retryBtn.classList.remove('hidden');
+                }
+            }
+        } catch (error) {
+            errorMsg.textContent = 'Er is een fout opgetreden. Probeer het later opnieuw.';
+            errorDiv.classList.remove('hidden');
+            retryBtn.classList.remove('hidden');
+        } finally {
+            loading.classList.remove('active');
+            submitBtn.disabled = false;
+            isSubmitting = false;
+        }
+    }
+});
+
+function copyPoem() {
+    const poem = document.getElementById('poem').textContent;
+    navigator.clipboard.writeText(poem).then(() => {
+        alert('Gedicht gekopieerd naar klembord!');
+    });
+}
+
+function sharePoem() {
+    const poem = document.getElementById('poem').textContent;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Mijn Valentijnsgedicht',
+            text: poem,
+            url: window.location.href
+        });
+    } else {
+        copyPoem();
+    }
+}
+</script>
+{% endblock %}

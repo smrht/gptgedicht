@@ -116,6 +116,96 @@ class SinterklaasPoemForm(forms.ModelForm):
         return instance
 
 
+class ValentijnsPoemForm(forms.ModelForm):
+    """Form voor Valentijnsgedichten met specifieke parameters."""
+    
+    # Valentijn-specifieke mood/toon choices
+    VALENTIJN_MOOD_CHOICES = [
+        ('romantisch', 'Romantisch en liefdevol'),
+        ('speels', 'Speels en flirterig'),
+        ('grappig', 'Grappig met humor'),
+        ('sensueel', 'Sensueel maar stijlvol'),
+        ('lief', 'Lief en teder'),
+        ('poëtisch', 'Poëtisch en diepzinnig'),
+    ]
+    
+    # Relatie type - belangrijk voor de toon
+    RELATIE_CHOICES = [
+        ('partner', 'Mijn partner/geliefde'),
+        ('crush', 'Mijn crush/verliefdheid'),
+        ('getrouwd', 'Mijn man/vrouw'),
+        ('dating', 'Iemand waarmee ik date'),
+        ('afstand', 'Langeafstandsrelatie'),
+        ('geheim', 'Geheime liefde'),
+    ]
+    
+    # Lengte opties
+    LENGTH_CHOICES = [
+        ('kort', 'Kort (2-3 strofen)'),
+        ('medium', 'Gemiddeld (4-5 strofen)'),
+        ('lang', 'Lang (6+ strofen)'),
+    ]
+
+    mood = forms.ChoiceField(
+        choices=VALENTIJN_MOOD_CHOICES,
+        label='Toon van het gedicht',
+        widget=forms.Select()
+    )
+    
+    relatie_type = forms.ChoiceField(
+        choices=RELATIE_CHOICES,
+        label='Wat is jullie relatie?',
+        widget=forms.Select()
+    )
+    
+    length = forms.ChoiceField(
+        choices=LENGTH_CHOICES,
+        label='Lengte',
+        initial='medium',
+        widget=forms.Select()
+    )
+    
+    eigenschappen = forms.CharField(
+        required=False,
+        label='Wat vind je leuk aan deze persoon?',
+        widget=forms.Textarea(attrs={
+            'rows': 2,
+            'placeholder': 'Bijv: mooie ogen, geweldige lach, altijd lief, goede kok'
+        })
+    )
+    
+    herinneringen = forms.CharField(
+        required=False,
+        label='Speciale herinneringen of momenten (optioneel)',
+        widget=forms.Textarea(attrs={
+            'rows': 2,
+            'placeholder': 'Bijv: onze eerste date in het park, samen naar Parijs'
+        })
+    )
+
+    class Meta:
+        model = Poem
+        fields = ['recipient']
+        labels = {
+            'recipient': 'Voor wie is dit gedicht?',
+        }
+        widgets = {
+            'recipient': forms.TextInput(attrs={
+                'placeholder': 'Bijv: Lisa, mijn schat, de liefde van mijn leven'
+            }),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.style = 'romantisch'
+        instance.length = self.cleaned_data.get('length', 'medium')
+        instance.mood = self.cleaned_data.get('mood', 'romantisch')
+        instance.theme = 'VALENTIJN'
+        if commit:
+            instance.save()
+        return instance
+
+
 class SignupForm(UserCreationForm):
     email = forms.EmailField(required=True, help_text="Voer een geldig e-mailadres in.")
     # Honeypot veld - als dit ingevuld is, is het een bot
