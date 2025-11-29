@@ -798,7 +798,7 @@ class SinterklaasPoemCreateView(CreateView):
         if form.is_valid():
             cleaned_data = form.cleaned_data
 
-            for field in ['subject', 'mood', 'recipient', 'additional_info']:
+            for field in ['theme', 'mood', 'recipient', 'additional_info']:
                 if contains_blocked_content(cleaned_data.get(field, '')):
                     return JsonResponse({
                         'status': 'error',
@@ -834,29 +834,43 @@ class SinterklaasPoemCreateView(CreateView):
                     'message': 'Er is een fout opgetreden bij het genereren van het Sinterklaasgedicht.'
                 }, status=500)
         else:
+            logger.error(f"Form validation errors: {form.errors}")
+            logger.error(f"POST data: {request.POST}")
             return JsonResponse({
                 'status': 'error',
-                'message': 'Ongeldige gegevens ingevoerd.'
+                'message': f'Ongeldige gegevens: {form.errors.as_text()}'
             }, status=400)
 
     @retry_with_exponential_backoff(max_retries=3, initial_wait=5)
     def _generate_poem_with_retry(self, data):
-        system_prompt = """Je bent een ervaren Sinterklaas dichter die prachtige Nederlandse gedichten schrijft.
-Je schrijft alleen familie-vriendelijke, gepaste gedichten.
-Vermijd onder alle omstandigheden ongepaste, seksuele of expliciete inhoud.
-Focus op positieve, opbouwende en inspirerende thema's.
+        system_prompt = """Je bent een meester-dichter gespecialiseerd in traditionele Nederlandse Sinterklaasgedichten.
 
-Begin altijd met de regel: 'Sinterklaas zat eens te denken, wat hij jou zou schenken.'
-Voeg humor en persoonlijke details toe waar mogelijk."""
+RIJMREGELS (STRIKT):
+- Gebruik AABB rijmschema: elke 2 opeenvolgende regels rijmen op elkaar
+- Zorg voor ZUIVER eindrijm (niet alleen klinkerrijm)
+- Elke regel heeft 8-12 lettergrepen voor goed ritme
 
-        prompt = "Sinterklaas zat eens te denken, wat hij jou zou schenken."
-        prompt += f" Dit gedicht is voor {data['recipient']}."
-        prompt += f" Het onderwerp is {data['subject']} en de toon is {data['mood']}."
+STRUCTUUR:
+- Minimaal 4 strofen van elk 4 regels
+- Begin ALTIJD met: "Sinterklaas zat eens te denken,"
+- Tweede regel: "wat hij [naam] toch zou schenken."
+
+STIJL:
+- Speels, persoonlijk en humoristisch
+- Verwijs naar hobby's/eigenschappen uit het thema
+- Familie-vriendelijk, geen ongepaste inhoud
+
+OUTPUT: Geef ALLEEN het gedicht, geen uitleg of titel."""
+
+        prompt = f"""Schrijf een Sinterklaasgedicht voor: {data['recipient']}
+Thema/onderwerp: {data['theme']}
+Toon: {data['mood']}"""
         if data.get('additional_info'):
-            prompt += f" Extra context: {data['additional_info']}"
+            prompt += f"\nExtra info: {data['additional_info']}"
 
         client = get_openai_client()
-        model = getattr(settings, 'GENERATOR_MODEL', getattr(settings, 'PLANNER_MODEL', 'google/gemini-3-pro-preview'))
+        model = settings.GENERATOR_MODEL
+        logger.info(f"Using model: {model}")
         completion = client.chat.completions.create(
             model=model,
             messages=[
@@ -868,7 +882,12 @@ Voeg humor en persoonlijke details toe waar mogelijk."""
             timeout=40,
         )
 
-        generated_text = completion.choices[0].message.content.strip()
+        # Debug: log raw response
+        logger.info(f"Raw completion: {completion}")
+        raw_content = completion.choices[0].message.content
+        logger.info(f"Raw content type: {type(raw_content)}, value: {raw_content}")
+        
+        generated_text = _normalize_content(raw_content).strip()
 
         if contains_blocked_content(generated_text):
             raise ValueError("Gegenereerde inhoud bevat ongepaste termen")

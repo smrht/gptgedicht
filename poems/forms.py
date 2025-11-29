@@ -55,17 +55,41 @@ class PoemForm(forms.ModelForm):
         )
 
 class SinterklaasPoemForm(forms.ModelForm):
+    # Sinterklaas-specifieke mood choices (wijkt af van model)
+    SINT_MOOD_CHOICES = [
+        ('vrolijk', 'Vrolijk en speels'),
+        ('grappig', 'Grappig met humor'),
+        ('lief', 'Lief en hartelijk'),
+        ('pesterig', 'Licht pesterig (vriendelijk)'),
+    ]
+
+    # Overschrijf mood met eigen choices
+    mood = forms.ChoiceField(
+        choices=SINT_MOOD_CHOICES,
+        label='Stemming',
+        widget=forms.Select()
+    )
+
+    # Extra veld dat niet in het model zit
+    additional_info = forms.CharField(
+        required=False,
+        label='Extra informatie (optioneel)',
+        widget=forms.Textarea(attrs={
+            'rows': 3,
+            'placeholder': 'Bijv: Het cadeau is een boek over tuinieren, ze is altijd bezig in de tuin'
+        })
+    )
+
     class Meta:
         model = Poem
-        fields = ['theme', 'mood', 'recipient']
+        fields = ['theme', 'recipient']  # mood handled separately
         labels = {
-            'theme': 'Onderwerp',
-            'mood': 'Stemming',
+            'theme': 'Onderwerp / Thema',
             'recipient': 'Voor wie is het gedicht?',
         }
         widgets = {
-            'theme': forms.TextInput(attrs={'placeholder': 'Bijv. speelgoed, avontuur...'}),
-            'recipient': forms.TextInput(attrs={'placeholder': 'Voor wie is het gedicht?'}),
+            'theme': forms.TextInput(attrs={'placeholder': 'Bijv. voetbal, lezen, altijd te laat komen'}),
+            'recipient': forms.TextInput(attrs={'placeholder': 'Bijv: Oma, kleine Tim, mijn collega Jan'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -86,6 +110,7 @@ class SinterklaasPoemForm(forms.ModelForm):
         instance = super().save(commit=False)
         instance.style = 'rijmend'  # Default style for Sinterklaas poems
         instance.length = 'medium'  # Default length
+        instance.mood = self.cleaned_data.get('mood', 'vrolijk')  # Mood from form
         if commit:
             instance.save()
         return instance

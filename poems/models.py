@@ -98,12 +98,13 @@ class Poem(models.Model):
             return poems_count >= 2
         else:
             # Anonieme gebruikers: wekelijks limiet op IP
+            # TODO: Zet terug naar 2 na testing
             time_threshold = timezone.now() - timedelta(days=7)
             poems_count = cls.objects.filter(
                 ip_address=ip_address,
                 created_at__gte=time_threshold
             ).count()
-            return poems_count >= 2
+            return poems_count >= 50  # Was 2, tijdelijk verhoogd voor testing
 
     def clean(self):
         # Gebruikerslimiet checken
@@ -115,8 +116,9 @@ class Poem(models.Model):
                 )
         else:
             # Anonieme gebruikers check:
+            # TODO: Zet message terug naar (2) na testing
             if Poem.check_rate_limit(ip_address=self.ip_address):
                 raise ValidationError(
-                    'Je hebt het maximale aantal gedichten (2) voor vandaag bereikt. '
+                    'Je hebt het maximale aantal gedichten (50) voor deze week bereikt. '
                     'Maak een account en koop credits om meer te genereren.'
                 )
