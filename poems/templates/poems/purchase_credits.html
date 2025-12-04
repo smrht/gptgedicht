@@ -34,12 +34,28 @@
                 </thead>
                 <tbody>
                     {% for package in credit_packages %}
-                        <tr>
-                            <td class="py-2 px-4 border-b text-gray-600">{{ package.name }}</td>
-                            <td class="py-2 px-4 border-b text-center text-gray-600">{{ package.credits }}</td>
-                            <td class="py-2 px-4 border-b text-center text-gray-600">€{{ package.price_cents|divided_by:100|floatformat:2 }}</td>
-                            <td class="py-2 px-4 border-b text-center">
-                                <button class="buy-button bg-indigo-600 text-white py-1 px-3 rounded hover:bg-indigo-700 transition duration-200" data-package="{{ package.name }}">
+                        <tr class="{% if package.name == 'Pro' %}bg-gradient-to-r from-indigo-50 to-purple-50{% endif %}">
+                            <td class="py-3 px-4 border-b">
+                                {% if package.name == 'Pro' %}
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-semibold text-indigo-700">{{ package.name }}</span>
+                                        <span class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">BESTE WAARDE</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-gray-600">{{ package.name }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 border-b text-center {% if package.name == 'Pro' %}font-semibold text-indigo-700{% else %}text-gray-600{% endif %}">{{ package.credits }}</td>
+                            <td class="py-3 px-4 border-b text-center">
+                                {% if package.name == 'Pro' %}
+                                    <span class="font-semibold text-indigo-700">€{{ package.price_cents|divided_by:100|floatformat:2 }}</span>
+                                    <span class="block text-xs text-green-600 font-medium">40% korting!</span>
+                                {% else %}
+                                    <span class="text-gray-600">€{{ package.price_cents|divided_by:100|floatformat:2 }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 border-b text-center">
+                                <button class="buy-button {% if package.name == 'Pro' %}bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700{% else %}bg-indigo-600 hover:bg-indigo-700{% endif %} text-white py-1 px-3 rounded transition duration-200" data-package="{{ package.name }}">
                                     Koop
                                 </button>
                             </td>

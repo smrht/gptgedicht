@@ -569,7 +569,34 @@ class PoemCreateView(View):
     def get(self, request, *args, **kwargs):
         # Render de HTML pagina met het formulier en een teller van alle gedichten
         total_poems = Poem.objects.count()
-        return render(request, self.template_name, {"total_poems": total_poems})
+        now = timezone.now()
+        
+        # Bereken remaining gratis gedichten
+        poems_remaining = 2
+        user_credits = 0
+        if request.user.is_authenticated:
+            poem_count = Poem.objects.filter(
+                user=request.user, 
+                created_at__year=now.year, 
+                created_at__month=now.month
+            ).count()
+            poems_remaining = max(0, 2 - poem_count)
+            try:
+                user_credits = request.user.profile.credits
+            except Profile.DoesNotExist:
+                user_credits = 0
+        else:
+            # Anoniem: check IP limiet (week)
+            ip = get_client_ip(request)
+            past_week = now - timedelta(days=7)
+            poem_count = Poem.objects.filter(ip_address=ip, created_at__gte=past_week).count()
+            poems_remaining = max(0, 2 - poem_count)
+        
+        return render(request, self.template_name, {
+            "total_poems": total_poems,
+            "poems_remaining": poems_remaining,
+            "user_credits": user_credits,
+        })
 
     @method_decorator(ratelimit(key='ip', rate='5/m', method=['POST'], block=True))
     def post(self, request, *args, **kwargs):
