@@ -654,8 +654,8 @@ class PoemCreateView(View):
 class CreditPurchaseView(LoginRequiredMixin, View):
     def get(self, request):
         credit_packages = [
-            {'name': 'Starter', 'credits': 1, 'price_cents': 50},
             {'name': 'Economie', 'credits': 15, 'price_cents': 500},
+            {'name': 'Pro', 'credits': 50, 'price_cents': 1000},
         ]
         
         # Beschikbare betaalmethoden per land
@@ -675,8 +675,8 @@ class CreditPurchaseView(LoginRequiredMixin, View):
         try:
             data = json.loads(request.body)
             package = next((p for p in [
-                {'name': 'Starter', 'credits': 1, 'price_cents': 50},
                 {'name': 'Economie', 'credits': 15, 'price_cents': 500},
+                {'name': 'Pro', 'credits': 50, 'price_cents': 1000},
             ] if p['name'] == data['package']), None)
 
             if not package:
