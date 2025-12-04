@@ -3,8 +3,15 @@ from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
 from django.http import HttpResponse
 from django.conf import settings
+from django.contrib.sitemaps.views import sitemap
 import os
 from .views import checkout_complete, checkout_success, PoemCreateView, SinterklaasPoemCreateView, ValentijnsPoemCreateView, SignupView, CreditPurchaseView, StripeWebhookView, DashboardView, CheckoutCompleteView
+from .sitemaps import StaticViewSitemap, HomeSitemap
+
+sitemaps = {
+    'home': HomeSitemap,
+    'static': StaticViewSitemap,
+}
 
 def ads_txt(request):
     """Serve ads.txt for Google AdSense verification"""
@@ -13,7 +20,17 @@ def ads_txt(request):
         content = f.read()
     return HttpResponse(content, content_type='text/plain')
 
+
+def robots_txt(request):
+    """Serve robots.txt for search engine crawlers"""
+    robots_path = os.path.join(settings.BASE_DIR, 'robots.txt')
+    with open(robots_path, 'r') as f:
+        content = f.read()
+    return HttpResponse(content, content_type='text/plain')
+
 urlpatterns = [
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    path('robots.txt', robots_txt, name='robots_txt'),
     path('ads.txt', ads_txt, name='ads_txt'),
     path('', PoemCreateView.as_view(), name='poem_create'),
     path('sinterklaas/', SinterklaasPoemCreateView.as_view(), name='sinterklaas_poem_create'),
