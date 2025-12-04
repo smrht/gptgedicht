@@ -807,7 +807,7 @@ class DashboardView(LoginRequiredMixin, View):
         user = request.user
         # Haal de gedichten van de ingelogde gebruiker op
         poems = Poem.objects.filter(user=user)
-        return render(request, 'dashboard.html', {
+        return render(request, 'registration/dashboard.html', {
             'poems': poems,
             'credits': user.profile.credits
         })
