@@ -44,5 +44,24 @@ POST naar `/sinterklaas/` gaf 400 Bad Request door veld mismatch.
 
 ---
 
+## 2025-12-11: Fix Credit Systeem Bug Sinterklaas/Valentijn
+
+### Probleem
+Ingelogde gebruikers met credits kregen foutmelding "Maak een account" bij Sinterklaas/Valentijn gedichten.
+
+### Oorzaak
+`SinterklaasPoemCreateView` en `ValentijnsPoemCreateView` koppelden `user` niet aan `Poem` object → model validatie dacht dat het anonieme gebruikers waren.
+
+### Oplossing
+In beide views toegevoegd:
+1. `poem.user = request.user` (als ingelogd)
+2. `poem.ip_address = get_client_ip(request)`
+3. Credit check vóór generatie
+4. Credit aftrek ná succesvolle generatie (als >2 gedichten/maand)
+
+**Bestanden:** `poems/views.py` (regel 835-870 en 978-1012)
+
+---
+
 ## TODO
 - [ ] Rate limit terugzetten naar 2 in `poems/models.py` regel 107

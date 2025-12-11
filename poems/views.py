@@ -834,11 +834,40 @@ class SinterklaasPoemCreateView(CreateView):
 
             poem = form.save(commit=False)
             poem.theme = 'SINTERKLAAS'
+            poem.ip_address = get_client_ip(request)
+            
+            user = request.user if request.user.is_authenticated else None
+            now = timezone.now()
+            
+            if user:
+                poem.user = user
+                poem_count = Poem.objects.filter(user=user, created_at__year=now.year, created_at__month=now.month).count()
+                if poem_count >= 2 and user.profile.credits < 1:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Je hebt je gratis maandlimiet bereikt. Koop credits om meer gedichten te genereren.',
+                        'redirect_url': reverse('purchase_credits')
+                    }, status=402)
+            else:
+                past_week = now - timedelta(days=7)
+                poems_count = Poem.objects.filter(ip_address=poem.ip_address, created_at__gte=past_week).count()
+                if poems_count >= 2:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Je hebt het maximale aantal gedichten (2) voor deze week bereikt. Maak een account en koop credits om meer te genereren.',
+                        'redirect_url': reverse('signup')
+                    }, status=429)
 
             try:
                 poem.generated_text = self._generate_poem_with_retry(cleaned_data)
                 poem.full_clean()
                 poem.save()
+                
+                if user:
+                    poem_count = Poem.objects.filter(user=user, created_at__year=now.year, created_at__month=now.month).count()
+                    if poem_count > 2:
+                        user.profile.credits -= 1
+                        user.profile.save()
                 return JsonResponse({
                     'status': 'success',
                     'poem': poem.generated_text
@@ -947,11 +976,40 @@ class ValentijnsPoemCreateView(CreateView):
                     }, status=400)
 
             poem = form.save(commit=False)
+            poem.ip_address = get_client_ip(request)
+            
+            user = request.user if request.user.is_authenticated else None
+            now = timezone.now()
+            
+            if user:
+                poem.user = user
+                poem_count = Poem.objects.filter(user=user, created_at__year=now.year, created_at__month=now.month).count()
+                if poem_count >= 2 and user.profile.credits < 1:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Je hebt je gratis maandlimiet bereikt. Koop credits om meer gedichten te genereren.',
+                        'redirect_url': reverse('purchase_credits')
+                    }, status=402)
+            else:
+                past_week = now - timedelta(days=7)
+                poems_count = Poem.objects.filter(ip_address=poem.ip_address, created_at__gte=past_week).count()
+                if poems_count >= 2:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Je hebt het maximale aantal gedichten (2) voor deze week bereikt. Maak een account en koop credits om meer te genereren.',
+                        'redirect_url': reverse('signup')
+                    }, status=429)
 
             try:
                 poem.generated_text = self._generate_valentijn_poem(cleaned_data)
                 poem.full_clean()
                 poem.save()
+                
+                if user:
+                    poem_count = Poem.objects.filter(user=user, created_at__year=now.year, created_at__month=now.month).count()
+                    if poem_count > 2:
+                        user.profile.credits -= 1
+                        user.profile.save()
                 return JsonResponse({
                     'status': 'success',
                     'poem': poem.generated_text
