@@ -63,5 +63,20 @@ In beide views toegevoegd:
 
 ---
 
+## 2025-12-11: Fix form prefill user/ip voor Sinterklaas & Valentijn
+
+### Probleem
+`form.is_valid()` riep `full_clean()` aan terwijl `user` nog leeg was → model dacht dat het anoniem was en gebruikte IP-rate-limit, ook bij ingelogde users met credits.
+
+### Oplossing
+Voor `form.is_valid()` in beide views:
+1. `form.instance.ip_address = get_client_ip(request)`
+2. `form.instance.user = request.user` (indien ingelogd)
+3. Daarna `form.save(commit=False)` met fallback `poem.ip_address = poem.ip_address or get_client_ip(request)` en `user = form.instance.user`
+
+**Bestanden:** `poems/views.py` (Sinterklaas: regel 824-845, Valentijn: regel 969-994)
+
+---
+
 ## TODO
 - [ ] Rate limit terugzetten naar 2 in `poems/models.py` regel 107
