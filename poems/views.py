@@ -822,6 +822,10 @@ class SinterklaasPoemCreateView(CreateView):
     @method_decorator(ratelimit(key='ip', rate='5/m', method=['POST'], block=True))
     def post(self, request, *args, **kwargs):
         form = self.get_form()
+        # Zorg dat user/ip al op de instance staan vóór form.is_valid(), zodat model.clean de juiste context heeft
+        form.instance.ip_address = get_client_ip(request)
+        if request.user.is_authenticated:
+            form.instance.user = request.user
         if form.is_valid():
             cleaned_data = form.cleaned_data
 
@@ -834,9 +838,9 @@ class SinterklaasPoemCreateView(CreateView):
 
             poem = form.save(commit=False)
             poem.theme = 'SINTERKLAAS'
-            poem.ip_address = get_client_ip(request)
+            poem.ip_address = poem.ip_address or get_client_ip(request)
             
-            user = request.user if request.user.is_authenticated else None
+            user = form.instance.user if form.instance.user and form.instance.user.is_authenticated else None
             now = timezone.now()
             
             if user:
