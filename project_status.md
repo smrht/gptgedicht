@@ -78,5 +78,18 @@ Voor `form.is_valid()` in beide views:
 
 ---
 
+## 2025-12-13: Fix mood choice validatie (Sinterklaas/Valentijn)
+
+### Probleem
+Gebruikers kregen een 400 met o.a. `Value 'grappig' is not a valid choice.` op veld `mood`.
+
+### Oorzaak
+Templates/forms stuurden moods zoals `grappig`, `lief`, `pesterig`, `speels`, `sensueel`, `poëtisch`, maar `Poem.MOOD_CHOICES` bevatte deze waarden niet. Bij `poem.full_clean()` faalde de model validatie.
+
+### Oplossing
+`Poem.MOOD_CHOICES` uitgebreid met ontbrekende moods.
+
+**Bestanden:** `poems/models.py`
+
 ## TODO
 - [ ] Rate limit terugzetten naar 2 in `poems/models.py` regel 107

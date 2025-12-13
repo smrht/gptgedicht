@@ -48,6 +48,12 @@ class Poem(models.Model):
         ('romantisch', 'Romantisch'),
         ('inspirerend', 'Inspirerend'),
         ('rustig', 'Rustig'),
+        ('grappig', 'Grappig'),
+        ('lief', 'Lief'),
+        ('pesterig', 'Pesterig'),
+        ('speels', 'Speels'),
+        ('sensueel', 'Sensueel'),
+        ('poëtisch', 'Poëtisch'),
     ]
 
     SEASON_CHOICES = [
